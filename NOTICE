@@ -1,0 +1,11 @@
+agy-plugin-cc
+
+Portions of this software are adapted from openai/codex-plugin-cc
+(https://github.com/openai/codex-plugin-cc), licensed under the Apache
+License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0):
+
+- plugins/agy/scripts/lib/process.mjs (adapted from plugins/codex/scripts/lib/process.mjs)
+- plugins/agy/scripts/lib/git.mjs (slim adaptation of plugins/codex/scripts/lib/git.mjs)
+- The overall plugin structure and command patterns follow the same reference.
+
+All other code is original and licensed under the MIT License (see LICENSE).
