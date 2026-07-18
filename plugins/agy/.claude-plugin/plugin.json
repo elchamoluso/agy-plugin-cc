@@ -1,6 +1,6 @@
 {
   "name": "agy",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Use Google's Antigravity CLI (agy) from Claude Code: ask Gemini, delegate tasks, get second-opinion code reviews.",
   "author": {
     "name": "Jesús M. Ferreira"

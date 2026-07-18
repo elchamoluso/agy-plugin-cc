@@ -453,7 +453,12 @@ async function handleSetup() {
     lines.push("  Install the Antigravity CLI and ensure it is on PATH (usually ~/.local/bin/agy).");
   }
 
+  // The token file is informational only: agy ≥1.1 on macOS keeps auth state elsewhere
+  // (jetski_state.pbtxt / Keychain), so its absence must not block the smoke test — the
+  // smoke test is the authoritative auth check.
+  let tokenFilePresent = false;
   if (fs.existsSync(TOKEN_FILE)) {
+    tokenFilePresent = true;
     try {
       const token = JSON.parse(fs.readFileSync(TOKEN_FILE, "utf8"));
       const expiry = token?.token?.expiry ? new Date(token.token.expiry) : null;
@@ -463,8 +468,7 @@ async function handleSetup() {
       lines.push("- Auth token: present but unreadable — run agy interactively once to re-login if the smoke test fails");
     }
   } else {
-    healthy = false;
-    lines.push("- Auth token: MISSING. Run `agy` interactively once and complete the Google login.");
+    lines.push("- Auth token file: not found (can be normal — e.g. on macOS agy keeps auth state elsewhere). The smoke test below is the real auth check.");
   }
 
   if (healthy) {
@@ -482,7 +486,11 @@ async function handleSetup() {
       healthy = false;
       const detail = result.error?.message ?? (result.timedOut ? "timed out" : `exit ${result.code}: ${(result.stderr || result.stdout).trim().slice(0, 400)}`);
       lines.push(`- Smoke test: FAILED (${detail})`);
-      lines.push("  If this mentions an expired or revoked token, run `agy` interactively once to re-authenticate.");
+      if (tokenFilePresent) {
+        lines.push("  If this mentions an expired or revoked token, run `agy` interactively once to re-authenticate.");
+      } else {
+        lines.push("  Likely not logged in on this machine: run `agy` interactively once (real terminal outside Claude Code; on macOS: open -a Terminal \"$(command -v agy)\") and complete the Google login, then re-run /agy:setup.");
+      }
     }
   } else {
     lines.push("", "Fix the items above, then run /agy:setup again.");
