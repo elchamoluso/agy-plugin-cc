@@ -30,6 +30,13 @@ Guidance when the user asks for a server:
   Say the number before adding something expensive.
 - `add` refuses a server whose prerequisites are missing, and refuses to duplicate one already
   configured globally. Relay those refusals rather than working around them.
+- **`add` also refuses Ads, Analytics and Search Console by default**, and that refusal is the
+  important one. Their credentials live in `google-marketing-mcp`'s `userConfig`, which Claude
+  Code keeps in secure storage; `${user_config.*}` only resolves inside the plugin that declares
+  it, so copying the config into a project file would produce a server with no credentials at all.
+  Installing the plugin is the right answer. `--anyway` writes a version that reads plain
+  `${VAR}` from the shell environment instead — offer it only if the user insists, and say
+  plainly that the token then lives in their shell profile rather than in secure storage.
 - Remote servers need an OAuth client attached before any call succeeds — `add` prints the
   warning. Point at `/google:setup` for that.
 - After a successful `add`, tell the user to restart Claude Code and approve the new servers.

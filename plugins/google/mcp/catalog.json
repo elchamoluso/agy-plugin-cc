@@ -192,6 +192,11 @@
       "env": ["GOOGLE_PROJECT_ID", "GOOGLE_ADS_DEVELOPER_TOKEN", "GOOGLE_ADS_LOGIN_CUSTOMER_ID", "GOOGLE_APPLICATION_CREDENTIALS"],
       "scopes": ["https://www.googleapis.com/auth/adwords"],
       "bundledIn": "google-marketing-mcp",
+      "preferPlugin": "google-marketing-mcp",
+      "projectEnv": {
+        "GOOGLE_PROJECT_ID": "${GOOGLE_PROJECT_ID}",
+        "GOOGLE_ADS_DEVELOPER_TOKEN": "${GOOGLE_ADS_DEVELOPER_TOKEN}"
+      },
       "warning": "Install from git only. The PyPI package google-ads-mcp is a dead 0.0.1 stub. The older google-marketing-solutions/google_ads_mcp_server repo is archived and redirects here.",
       "notes": "Needs a developer token with at least Explorer access. GOOGLE_ADS_LOGIN_CUSTOMER_ID only when entering through an MCC."
     },
@@ -206,6 +211,10 @@
       "env": ["GOOGLE_PROJECT_ID", "GOOGLE_APPLICATION_CREDENTIALS"],
       "scopes": ["https://www.googleapis.com/auth/analytics.readonly"],
       "bundledIn": "google-marketing-mcp",
+      "preferPlugin": "google-marketing-mcp",
+      "projectEnv": {
+        "GOOGLE_PROJECT_ID": "${GOOGLE_PROJECT_ID}"
+      },
       "notes": "Read-only. Covers both the Admin API (metadata) and the Data API (reporting). Enable both APIs in the GCP project."
     },
     "gsc": {
@@ -219,6 +228,11 @@
       "env": ["GSC_OAUTH_CLIENT_SECRETS_FILE", "GSC_CREDENTIALS_PATH", "GSC_SKIP_OAUTH", "GSC_ALLOW_DESTRUCTIVE"],
       "scopes": ["https://www.googleapis.com/auth/webmasters.readonly"],
       "bundledIn": "google-marketing-mcp",
+      "preferPlugin": "google-marketing-mcp",
+      "projectEnv": {
+        "GSC_OAUTH_CLIENT_SECRETS_FILE": "${GSC_OAUTH_CLIENT_SECRETS_FILE}",
+        "GSC_ALLOW_DESTRUCTIVE": "${GSC_ALLOW_DESTRUCTIVE:-false}"
+      },
       "notes": "Google publishes no official GSC MCP server. Chosen over ahonn/mcp-server-gsc and AkashRajpurohit/gsc-mcp because it is the only one with browser OAuth — a service account would have to be added by hand as a user on every property. Writes stay off unless GSC_ALLOW_DESTRUCTIVE=true."
     },
     "firebase": {

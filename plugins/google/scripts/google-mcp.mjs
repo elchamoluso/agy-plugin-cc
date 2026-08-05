@@ -103,7 +103,9 @@ function cmdList() {
 }
 
 function cmdAdd(ids) {
-  if (!ids.length) fail("Usage: add <server-id>...  (see `list`)");
+  const anyway = ids.includes("--anyway");
+  ids = ids.filter((id) => id !== "--anyway");
+  if (!ids.length) fail("Usage: add [--anyway] <server-id>...  (see `list`)");
   const config = readProjectConfig();
   const global = globallyConfigured();
   const added = [];
@@ -121,17 +123,44 @@ function cmdAdd(ids) {
       process.stdout.write(`! ${id} is already configured globally in ~/.claude.json — skipping to avoid a duplicate\n`);
       continue;
     }
+    // Checked before the binary requirements: a missing binary is a detour, but copying
+    // a credential-bearing server into a project file is the wrong road entirely, and
+    // the user should hear that first rather than after installing pipx for nothing.
+    // Servers whose credentials live in a plugin's userConfig cannot be copied here
+    // as-is: ${user_config.*} only resolves inside the plugin that declares it, and a
+    // project .mcp.json has no access to secure storage. Writing the bare config would
+    // produce a server that starts with no credentials and fails with a confusing auth
+    // error, while also bypassing the plugin's empty-env launcher.
+    if (server.preferPlugin && !anyway) {
+      process.stdout.write(
+        `✗ ${id} keeps its credentials in the ${server.preferPlugin} plugin, which stores them securely.\n` +
+          `  Install that instead:  /plugin install ${server.preferPlugin}@agy-marketplace\n` +
+          `  To add it here anyway, re-run with --anyway; you will then have to export ` +
+          `${Object.keys(server.projectEnv ?? {}).join(", ")} yourself, in plain text.\n`
+      );
+      continue;
+    }
     const missing = (server.requires ?? []).filter((binary) => !which(binary));
     if (missing.length) {
       process.stdout.write(`✗ ${id} needs ${missing.join(", ")} on PATH — run /google:setup first. Skipped.\n`);
       continue;
     }
-    config.mcpServers[id] = server.config;
+    config.mcpServers[id] = server.projectEnv
+      ? { ...server.config, env: { ...(server.config.env ?? {}), ...server.projectEnv } }
+      : server.config;
     added.push(id);
     const cost = server.schemaBytes ? ` (+${kb(server.schemaBytes)} of schema per session)` : "";
     process.stdout.write(`+ ${id}${cost}\n`);
     if (server.warning) process.stdout.write(`  warning: ${server.warning}\n`);
-    if (server.env?.length) process.stdout.write(`  needs env: ${server.env.join(", ")}\n`);
+    if (server.projectEnv) {
+      const unset = Object.keys(server.projectEnv).filter((name) => !process.env[name]);
+      process.stdout.write(`  reads from your shell environment: ${Object.keys(server.projectEnv).join(", ")}\n`);
+      if (unset.length) {
+        process.stdout.write(`  NOT SET right now: ${unset.join(", ")} — export them before starting Claude Code or the server will fail to authenticate.\n`);
+      }
+    } else if (server.env?.length) {
+      process.stdout.write(`  needs env: ${server.env.join(", ")}\n`);
+    }
     if (server.auth === "oauth-no-dcr") {
       process.stdout.write("  auth: Google does not support Dynamic Client Registration, so this will connect but 401 on every call until you attach your own OAuth client. See /google:setup.\n");
     }
