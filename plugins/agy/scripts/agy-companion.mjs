@@ -399,8 +399,10 @@ async function executePrompt({ prompt, options, skipPermissions, conversationId 
     stateWarning = rememberConversation(activeConversation, model);
   }
 
+  // Report the code the process will actually exit with, so the trailer and $? agree.
+  const exitCode = failed ? result.code || 1 : 0;
   const trailerParts = [
-    `exit ${failed ? 1 : 0}`,
+    `exit ${exitCode}`,
     `model "${model}"`,
     `${result.elapsedSeconds.toFixed(1)}s`,
     activeConversation ? `conversation ${activeConversation}` : "conversation unknown"
@@ -426,7 +428,7 @@ async function executePrompt({ prompt, options, skipPermissions, conversationId 
   }
 
   if (failed) {
-    process.exit(result.code || 1);
+    process.exit(exitCode);
   }
 }
 
