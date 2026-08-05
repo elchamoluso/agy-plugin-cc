@@ -127,9 +127,17 @@
         "SECOPS_REGION": {
           "default": "us",
           "verified": [
-            "us"
+            "us",
+            "europe-west2",
+            "europe-west3",
+            "europe-west6",
+            "europe-west9",
+            "asia-south1",
+            "asia-southeast1",
+            "australia-southeast1",
+            "me-west1"
           ],
-          "description": "Regional REP endpoint. Examples: us, europe, europe-west3, asia-southeast1."
+          "description": "Regional REP endpoint. Verified to resolve: us, europe-west2/3/6/9, asia-south1, asia-southeast1, australia-southeast1, me-west1. Note that a bare `europe` does NOT resolve — it must be a specific region."
         }
       },
       "scopes": [
@@ -137,7 +145,7 @@
       ],
       "auth": "oauth-no-dcr",
       "warning": "3.7 MB of schema across 70 tools — by far the most expensive server here, ~8x cloudsql. Only enable it in a project that genuinely does SecOps.",
-      "notes": "Measured in the us region only; regional symmetry is assumed, not verified. An earlier revision recorded this as unavailable because it was probed without a region."
+      "notes": "Tool count and schema size measured in `us` only; the other regions were confirmed to resolve but not measured. An earlier revision recorded this as unavailable because it was probed without a region."
     },
     "cloud-run": {
       "kind": "remote",

@@ -26,6 +26,30 @@ const PARTIAL = "PARTIAL";
 
 const args = new Set(process.argv.slice(2));
 const skipNetwork = args.has("--offline");
+const probeAll = args.has("--probe-all");
+const probeOne = [...args].find((a) => a.startsWith("--probe="))?.slice("--probe=".length) ?? null;
+// Concurrency cap: the catalogue is well past the point where Promise.all over every
+// remote would mean a burst of dozens of requests on each run.
+const PROBE_CONCURRENCY = 6;
+
+async function mapLimit(items, limit, fn) {
+  const queue = [...items];
+  const workers = Array.from({ length: Math.min(limit, queue.length) }, async () => {
+    while (queue.length) await fn(queue.shift());
+  });
+  await Promise.all(workers);
+}
+
+// Which servers this run cares about: the ones enabled in the project, unless told
+// otherwise. Probing the whole catalogue by default would be slow and mostly irrelevant.
+function projectServerIds() {
+  const file = path.join(process.env.CLAUDE_PROJECT_DIR || process.cwd(), ".mcp.json");
+  try {
+    return new Set(Object.keys(JSON.parse(fs.readFileSync(file, "utf8")).mcpServers ?? {}));
+  } catch {
+    return new Set();
+  }
+}
 
 function run(command, cmdArgs, options = {}) {
   return spawnSync(command, cmdArgs, { encoding: "utf8", timeout: 20000, ...options });
@@ -52,6 +76,16 @@ function report(status, subject, detail) {
 // server actually needs it.
 const catalog = JSON.parse(fs.readFileSync(CATALOG, "utf8"));
 const servers = catalog.servers;
+const enabledHere = projectServerIds();
+// Scope checking and probing both follow this set. With nothing enabled yet, fall back to
+// the servers bundled into a plugin, so a fresh project still gets a useful answer.
+const relevantServerIds = probeAll
+  ? new Set(Object.keys(servers))
+  : probeOne
+    ? new Set([probeOne])
+    : enabledHere.size
+      ? enabledHere
+      : new Set(Object.entries(servers).filter(([, s]) => s.bundledIn).map(([id]) => id));
 const neededBinaries = new Set(["gcloud"]);
 for (const server of Object.values(servers)) {
   for (const binary of server.requires ?? []) neededBinaries.add(binary);
@@ -94,18 +128,24 @@ if (!fs.existsSync(ADC_PATH)) {
   } catch {
     report(PARTIAL, "Application Default Credentials", `${ADC_PATH} exists but is not readable JSON`);
   }
+  // Only the scopes you actually need. Unioning every catalogued server would keep this
+  // line permanently red once the catalogue holds dozens of entries, at which point it
+  // stops carrying information.
   const wanted = new Set();
-  for (const server of Object.values(servers)) {
+  for (const [id, server] of Object.entries(servers)) {
+    if (!relevantServerIds.has(id)) continue;
     for (const scope of server.scopes ?? []) wanted.add(scope);
   }
   const missing = [...wanted].filter((scope) => !granted.includes(scope));
   const short = (s) => s.replace("https://www.googleapis.com/auth/", "");
   if (!granted.length) {
     report(PARTIAL, "ADC scopes", "the credential records no scopes — it was probably created without --scopes");
+  } else if (!wanted.size) {
+    report(OK, "ADC scopes", `${granted.length} granted; no server enabled in this project needs any of them yet`);
   } else if (missing.length) {
-    report(PARTIAL, "ADC scopes", `granted ${granted.length}; missing ${missing.map(short).join(", ")} — run /google:scopes`);
+    report(PARTIAL, "ADC scopes", `missing ${missing.map(short).join(", ")} for the servers enabled here — run /google:scopes`);
   } else {
-    report(OK, "ADC scopes", `all ${wanted.size} catalogued scopes granted`);
+    report(OK, "ADC scopes", `all ${wanted.size} scope(s) needed by this project's servers are granted`);
   }
   report(quotaProject ? OK : PARTIAL, "ADC quota project", quotaProject ?? "unset — run `gcloud auth application-default set-quota-project <id>`");
 }
@@ -149,8 +189,41 @@ function extractJson(text) {
   return line ? JSON.parse(line.slice(5).trim()) : null;
 }
 
-async function probeRemote(id, url) {
+// Resolve ${VAR} / ${VAR:-default} the way Claude Code would, so the probe sees what the
+// real server would see. Returns null when something required is missing.
+function expand(text) {
+  let missing = null;
+  const out = text.replace(/\$\{([A-Za-z_][A-Za-z0-9_]*)(?::-([^}]*))?\}/g, (_, name, fallback) => {
+    const value = process.env[name] ?? fallback;
+    if (value === undefined) missing = name;
+    return value ?? "";
+  });
+  return missing ? { missing } : { value: out };
+}
+
+async function probeRemote(id, server) {
+  const raw = server.config.url;
+  // A URL still carrying a placeholder cannot be probed. Without this the doctor would
+  // request a literal <REGION> and report a perfectly good server as MISSING.
+  if (/<[A-Z_]+>/.test(raw)) {
+    return report(PARTIAL, `mcp ${id}`, `needs a region — set ${Object.keys(server.variables ?? {}).join(", ") || "the endpoint variable"} and retry`);
+  }
+  const resolvedUrl = expand(raw);
+  if (resolvedUrl.missing) {
+    return report(PARTIAL, `mcp ${id}`, `SKIPPED — ${resolvedUrl.missing} is not set`);
+  }
+  const url = resolvedUrl.value;
+
   const headers = { "content-type": "application/json", accept: "application/json, text/event-stream" };
+  // An api-key server without its key is not "reachable but unauthorised", it is simply
+  // not configured — reporting the former would be plainly false.
+  for (const [name, template] of Object.entries(server.config.headers ?? {})) {
+    const resolved = expand(template);
+    if (resolved.missing || resolved.value === "") {
+      return report(MISSING, `mcp ${id}`, `SKIPPED — header ${name} needs ${resolved.missing ?? "a value"}, which is not set`);
+    }
+    headers[name] = resolved.value;
+  }
   const payload = (method, id2, params = {}) => JSON.stringify({ jsonrpc: "2.0", id: id2, method, params });
   try {
     const init = await fetch(url, {
@@ -174,7 +247,14 @@ async function probeRemote(id, url) {
       // This is the dangerous state: it looks healthy and is not.
       const kb = Math.round(Buffer.byteLength(JSON.stringify(tools), "utf8") / 1024);
       const plural = tools.length === 1 ? "tool" : "tools";
-      report(PARTIAL, `mcp ${id}`, `REACHABLE, NOT AUTHORISED — serves ${tools.length} ${plural} unauthenticated (${kb} KB of schema). Calls will 401 until you attach an OAuth client.`);
+      // tools/list answers without credentials on every one of these endpoints, so a
+      // successful listing says nothing about whether calls will work. The remedy differs
+      // by auth type, and telling an api-key server to attach an OAuth client is just wrong.
+      const remedy =
+        server.auth === "api-key"
+          ? "Its API key is set, so calls should work — try one to confirm."
+          : "Calls will 401 until you attach an OAuth client.";
+      report(PARTIAL, `mcp ${id}`, `REACHABLE — serves ${tools.length} ${plural} unauthenticated (${kb} KB of schema). ${remedy}`);
     } else {
       report(PARTIAL, `mcp ${id}`, `connected but tools/list failed — likely needs auth`);
     }
@@ -184,8 +264,16 @@ async function probeRemote(id, url) {
 }
 
 if (!skipNetwork) {
-  const remotes = Object.entries(servers).filter(([, s]) => s.kind === "remote" && s.auth !== "none");
-  await Promise.all(remotes.map(([id, s]) => probeRemote(id, s.config.url)));
+  const remotes = Object.entries(servers).filter(
+    ([id, s]) => s.kind === "remote" && s.auth !== "none" && s.status !== "unavailable" && relevantServerIds.has(id)
+  );
+  if (remotes.length) {
+    await mapLimit(remotes, PROBE_CONCURRENCY, ([id, s]) => probeRemote(id, s));
+  }
+  const skippedCount = Object.values(servers).filter((s) => s.kind === "remote").length - remotes.length;
+  if (skippedCount > 0 && !probeAll) {
+    report(OK, "mcp probes", `${remotes.length} probed (enabled here); ${skippedCount} catalogued but not enabled — use --probe-all to sweep them`);
+  }
 }
 
 // --- output ---------------------------------------------------------------
