@@ -15,6 +15,8 @@ import path from "node:path";
 import process from "node:process";
 import { spawnSync } from "node:child_process";
 
+import { listSkills, swapIn, printReport } from "./lib/vendor.mjs";
+
 const PLUGINS_DIR = path.resolve(import.meta.dirname, "..", "..");
 // Where each generated skill belongs. gws-* are capabilities and live in the hub; the
 // recipe-*/persona-* templates are half the skill count and go in their own plugin so the
@@ -57,15 +59,6 @@ function vendoredVersion() {
   return null;
 }
 
-function listSkills(dir) {
-  if (!fs.existsSync(dir)) return [];
-  return fs
-    .readdirSync(dir, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory() && fs.existsSync(path.join(dir, entry.name, "SKILL.md")))
-    .map((entry) => entry.name)
-    .sort();
-}
-
 const args = new Set(process.argv.slice(2));
 const force = args.has("--force");
 const only = [...args].find((a) => a.startsWith("--only="))?.slice("--only=".length) ?? null;
@@ -105,21 +98,11 @@ try {
     process.stdout.write(`\nWARNING: ${unclaimed.length} skill(s) match no target and were NOT vendored: ${unclaimed.join(", ")}\n`);
   }
 
-  for (const target of targets) {
-    const wanted = generated.filter(target.match);
-    const before = new Set(listSkills(target.dir));
-    fs.rmSync(target.dir, { recursive: true, force: true });
-    fs.mkdirSync(target.dir, { recursive: true });
-    for (const name of wanted) {
-      fs.cpSync(path.join(generatedDir, name), path.join(target.dir, name), { recursive: true });
-    }
-    const after = new Set(wanted);
-    const added = wanted.filter((n) => !before.has(n));
-    const removed = [...before].filter((n) => !after.has(n));
-    process.stdout.write(`\n${target.id}: ${wanted.length} skills → ${path.relative(PLUGINS_DIR, target.dir)}\n`);
-    if (added.length) process.stdout.write(`  added:   ${added.join(", ")}\n`);
-    if (removed.length) process.stdout.write(`  removed: ${removed.join(", ")}\n`);
-  }
+  const report = swapIn({
+    targets: targets.map((t) => ({ id: t.id, dir: t.dir, names: generated.filter(t.match) })),
+    resolve: (name) => path.join(generatedDir, name)
+  });
+  printReport(report, PLUGINS_DIR);
   process.stdout.write("\nReview the result with `git diff --stat` before committing.\n");
 } finally {
   fs.rmSync(stage, { recursive: true, force: true });
