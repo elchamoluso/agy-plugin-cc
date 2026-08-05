@@ -37,6 +37,19 @@ página de productos soportados de Google y nadie las ha medido: se ven con `lis
 las rechaza. Sin esa distinción, triplicar el catálogo habría diluido su única promesa, que las
 cifras son mediciones.
 
+Puedes ascender cualquiera midiéndola tú:
+
+```
+/google:mcp add netapp          # ✗ nunca sondeada, coste desconocido
+/google:doctor --probe=netapp   # 14 tools, 120 KB — se guarda
+/google:mcp add netapp          # ✓ ahora sí
+```
+
+La medición va a `~/.cache/google-plugin/measurements.json`, **no al catálogo**: un plugin
+instalado vive en `~/.claude/plugins/cache/`, donde cualquier escritura se pierde en la siguiente
+reinstalación. Y una medición tuya no es un hecho sobre el catálogo, sino sobre tu sonda — por eso
+`list` la marca como `measured here`.
+
 ## Tres niveles de activación
 
 1. **Plugin** — `/plugin install google-cloud-mcp@agy-marketplace`. Global, grueso.

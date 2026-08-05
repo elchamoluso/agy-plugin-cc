@@ -16,11 +16,15 @@ import path from "node:path";
 import process from "node:process";
 import { spawnSync } from "node:child_process";
 
+import { applyMeasurements } from "./lib/measurements.mjs";
+
 const CATALOG = path.resolve(import.meta.dirname, "..", "mcp", "catalog.json");
 const GLOBAL_CONFIG = path.join(os.homedir(), ".claude.json");
 
 const catalog = JSON.parse(fs.readFileSync(CATALOG, "utf8"));
-const servers = catalog.servers;
+// Servers you probed yourself count as verified here too — otherwise `add` would keep
+// refusing the server it just told you to measure.
+const servers = applyMeasurements(catalog.servers);
 
 function fail(message) {
   process.stderr.write(`${message}\n`);
@@ -98,15 +102,16 @@ function cmdList(showAll) {
     tools: s.toolCount ?? null,
     bytes: s.schemaBytes ?? null,
     title: s.title,
-    bundled: s.bundledIn ?? null
+    bundled: s.bundledIn ?? null,
+    local: Boolean(s.measuredLocally)
   }));
   const width = Math.max(...rows.map((r) => r.id.length));
   process.stdout.write(`Catalogue (measured ${catalog.measuredAt}) — ${MCP_FILE}\n\n`);
   for (const r of rows.sort((a, b) => (b.bytes ?? 0) - (a.bytes ?? 0))) {
     const noun = r.tools === 1 ? "tool " : "tools";
     const cost = r.tools ? `${String(r.tools).padStart(3)} ${noun} ${kb(r.bytes).padStart(7)}` : "".padStart(18);
-    const where = r.bundled ? `also in ${r.bundled}` : "";
-    process.stdout.write(`${r.on ? "●" : "○"} ${r.id.padEnd(width)}  ${r.kind.padEnd(6)} ${cost}  ${r.title}${where ? `  (${where})` : ""}\n`);
+    const notes = [r.bundled ? `also in ${r.bundled}` : null, r.local ? "measured here" : null].filter(Boolean);
+    process.stdout.write(`${r.on ? "●" : "○"} ${r.id.padEnd(width)}  ${r.kind.padEnd(6)} ${cost}  ${r.title}${notes.length ? `  (${notes.join(", ")})` : ""}\n`);
   }
   const total = rows.filter((r) => r.on).reduce((s, r) => s + (r.bytes ?? 0), 0);
   process.stdout.write(`\n● enabled in this project  ○ available\nEnabled schema cost: ${kb(total)}\n`);

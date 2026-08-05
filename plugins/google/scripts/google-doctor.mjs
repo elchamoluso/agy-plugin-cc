@@ -15,6 +15,8 @@ import path from "node:path";
 import process from "node:process";
 import { spawnSync } from "node:child_process";
 
+import { applyMeasurements, recordMeasurement } from "./lib/measurements.mjs";
+
 const CATALOG = path.resolve(import.meta.dirname, "..", "mcp", "catalog.json");
 const ADC_PATH = process.env.GOOGLE_APPLICATION_CREDENTIALS
   || path.join(os.homedir(), ".config", "gcloud", "application_default_credentials.json");
@@ -75,7 +77,7 @@ function report(status, subject, detail) {
 // `requires` in the catalogue drives this: a binary is only worth flagging if some
 // server actually needs it.
 const catalog = JSON.parse(fs.readFileSync(CATALOG, "utf8"));
-const servers = catalog.servers;
+const servers = applyMeasurements(catalog.servers);
 const enabledHere = projectServerIds();
 // Scope checking and probing both follow this set. With nothing enabled yet, fall back to
 // the servers bundled into a plugin, so a fresh project still gets a useful answer.
@@ -245,8 +247,17 @@ async function probeRemote(id, server) {
     const tools = extractJson(await list.text())?.result?.tools;
     if (Array.isArray(tools)) {
       // This is the dangerous state: it looks healthy and is not.
-      const kb = Math.round(Buffer.byteLength(JSON.stringify(tools), "utf8") / 1024);
+      const schemaBytes = Buffer.byteLength(JSON.stringify(tools), "utf8");
+      const kb = Math.round(schemaBytes / 1024);
       const plural = tools.length === 1 ? "tool" : "tools";
+      // Persist, so `--probe=<id>` is actually the route from listed to verified that
+      // /google:mcp add points at. Printing alone left that instruction a dead end.
+      if (server.status === "listed" || probeOne === id || probeAll) {
+        const file = recordMeasurement(id, { toolCount: tools.length, schemaBytes });
+        if (file && server.status === "listed") {
+          report(OK, `mcp ${id} measured`, `${tools.length} ${plural}, ${kb} KB recorded in ${file} — \`/google:mcp add ${id}\` will now accept it`);
+        }
+      }
       // tools/list answers without credentials on every one of these endpoints, so a
       // successful listing says nothing about whether calls will work. The remedy differs
       // by auth type, and telling an api-key server to attach an OAuth client is just wrong.
