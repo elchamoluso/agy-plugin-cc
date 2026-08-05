@@ -1,34 +1,52 @@
 # agy-plugin-cc — herramientas de Google para Claude Code
 
-Un marketplace con seis plugins. `agy` puentea el Antigravity CLI de Google (modelos Gemini);
-los otros cinco traen Google Workspace y los servidores MCP de Google.
+Un marketplace con diez plugins. `agy` puentea el Antigravity CLI de Google (modelos Gemini);
+los otros nueve traen Google Workspace, las skills oficiales de Google y sus servidores MCP.
 
 ```
 /plugin marketplace add elchamoluso/agy-plugin-cc
 ```
 
+**Instala solo lo que uses.** Todos los costes de abajo están **medidos** con
+`claude plugin details`, no estimados.
+
 | Plugin | Qué trae | Coste siempre-activo |
 |---|---|---|
 | **agy** | `/agy:ask`, `/agy:review`, `/agy:exec` — Gemini vía tu suscripción Antigravity, sin coste por token | ~200 tok |
-| **google** | 44 skills de Workspace, `/google:doctor`, `/google:setup`, `/google:mcp` y el catálogo MCP | ~1,5k tok |
+| **google** | 44 skills de Workspace, `/google:doctor`, `/google:setup`, `/google:mcp` y el catálogo de 66 servidores | ~1,5k tok |
 | **google-workspace-recipes** | 41 plantillas `recipe-*` y 10 playbooks `persona-*` | ~1,5k tok |
-| **google-cloud-mcp** | gcloud, Cloud Run, Resource Manager, Developer Knowledge | ~57 KB de schema |
-| **google-marketing-mcp** | Google Ads, Analytics (GA4), Search Console | pide credenciales al instalar |
-| **google-data-mcp** | BigQuery + MCP Toolbox for Databases | ~133 KB de schema |
 
-Instala solo lo que uses:
+Las skills oficiales de Google, vendorizadas desde [`google/skills`](https://github.com/google/skills):
+
+| Plugin | Skills | Coste |
+|---|---:|---:|
+| **google-cloud-skills** | 37 — redes, seguridad, almacenamiento, bases de datos, serverless, WAF | ~6,3k tok |
+| **google-cloud-gke-skills** | 28 — todas las `gke-*`, juntas porque se citan entre sí | ~5,1k tok |
+| **google-cloud-ai-skills** | 22 — Vertex AI, Agent Platform, API de Gemini | ~3,7k tok |
+| **google-ads-skills** | 14 — Ads API, Data Manager, Mobile Ads, GA4 | ~2,2k tok |
+
+Y los servidores MCP, repartidos por coste de esquema:
+
+| Plugin | Qué trae | Coste |
+|---|---|---|
+| **google-cloud-mcp** | gcloud, Cloud Run, Resource Manager, Developer Knowledge | ~57 KB |
+| **google-marketing-mcp** | Google Ads, Analytics (GA4), Search Console | pide credenciales al instalar |
+| **google-data-mcp** | BigQuery + MCP Toolbox for Databases | ~133 KB |
 
 ```
 /plugin install google@agy-marketplace
 /google:doctor
 ```
 
-**Por qué los MCP van repartidos y no todos juntos:** los endpoints remotos de Google sirven su
-lista de herramientas **sin autenticar** — 151 herramientas y ~1,6 MB de esquema entre los 13,
-unos 400k tokens. Conectan "bien", cuestan contexto en cada sesión y solo fallan al llamar una
-herramienta. Y Claude Code solo permite encender o apagar un plugin entero. Los detalles y el
-tercer nivel de granularidad (`/google:mcp add <id>`, por proyecto) están en
-[`plugins/google/README.md`](plugins/google/README.md).
+**Por qué todo va repartido y no en un plugin único:** los endpoints remotos de Google sirven su
+lista de herramientas **sin autenticar** — 316 herramientas y ~6,5 MB de esquema entre los 28
+verificados, y Chronicle solo ya son 3,7 MB. Conectan "bien", cuestan contexto en cada sesión y
+solo fallan al llamar una herramienta. Las skills de Google tienen el mismo problema por otra vía:
+las 101 juntas son 17,3k tokens en cada sesión. Y Claude Code solo permite encender o apagar un
+plugin entero.
+
+Los detalles, el tercer nivel de granularidad (`/google:mcp add <id>`, por proyecto) y los plugins
+de Google que **no** vendorizamos están en [`plugins/google/README.md`](plugins/google/README.md).
 
 ## agy
 

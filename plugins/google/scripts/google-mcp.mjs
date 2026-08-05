@@ -141,7 +141,7 @@ function cmdAdd(ids) {
     if (server.status === "listed") {
       process.stdout.write(
         `✗ ${id} is catalogued from Google's supported-products page but has never been probed, so its tool count and schema cost are unknown.\n` +
-          `  Measure it first: node "\${CLAUDE_PLUGIN_ROOT}/scripts/google-doctor.mjs" --probe ${id}\n`
+          `  Measure it first: /google:doctor --probe=${id}\n`
       );
       continue;
     }

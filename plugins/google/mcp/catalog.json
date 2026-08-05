@@ -9,6 +9,21 @@
     "gws": "The Google Workspace CLI removed its `gws mcp` subcommand in 0.8.0 — a Discovery-API-wide MCP server exposed 200-400 tools. The gws-* skills in this plugin replace it at a fraction of the context cost."
   },
   "servers": {
+    "agentregistry": {
+      "kind": "remote",
+      "status": "listed",
+      "title": "Agent Registry",
+      "official": true,
+      "config": {
+        "type": "http",
+        "url": "https://agentregistry.googleapis.com/mcp"
+      },
+      "scopes": [
+        "https://www.googleapis.com/auth/cloud-platform"
+      ],
+      "auth": "oauth-no-dcr",
+      "notes": "Catalogued from Google's supported-products page; never probed, so its tool count and schema cost are unknown."
+    },
     "alloydb": {
       "kind": "remote",
       "title": "AlloyDB for PostgreSQL",
@@ -57,6 +72,51 @@
       "notes": "Read-only. Covers both the Admin API (metadata) and the Data API (reporting). Enable both APIs in the GCP project.",
       "status": "verified"
     },
+    "androidmanagement": {
+      "kind": "remote",
+      "status": "listed",
+      "title": "Android Management",
+      "official": true,
+      "config": {
+        "type": "http",
+        "url": "https://androidmanagement.googleapis.com/mcp"
+      },
+      "scopes": [
+        "https://www.googleapis.com/auth/cloud-platform"
+      ],
+      "auth": "oauth-no-dcr",
+      "notes": "Catalogued from Google's supported-products page; never probed, so its tool count and schema cost are unknown."
+    },
+    "apihub": {
+      "kind": "remote",
+      "status": "listed",
+      "title": "Apigee API hub",
+      "official": true,
+      "config": {
+        "type": "http",
+        "url": "https://apihub.googleapis.com/mcp"
+      },
+      "scopes": [
+        "https://www.googleapis.com/auth/cloud-platform"
+      ],
+      "auth": "oauth-no-dcr",
+      "notes": "Catalogued from Google's supported-products page; never probed, so its tool count and schema cost are unknown."
+    },
+    "backupdr": {
+      "kind": "remote",
+      "status": "listed",
+      "title": "Backup and DR",
+      "official": true,
+      "config": {
+        "type": "http",
+        "url": "https://backupdr.googleapis.com/mcp"
+      },
+      "scopes": [
+        "https://www.googleapis.com/auth/cloud-platform"
+      ],
+      "auth": "oauth-no-dcr",
+      "notes": "Catalogued from Google's supported-products page; never probed, so its tool count and schema cost are unknown."
+    },
     "bigquery": {
       "kind": "remote",
       "title": "BigQuery",
@@ -74,6 +134,36 @@
       "bundledIn": "google-data-mcp",
       "status": "verified",
       "measuredAt": "2026-08-05"
+    },
+    "bigquerydatatransfer": {
+      "kind": "remote",
+      "status": "listed",
+      "title": "BigQuery Data Transfer",
+      "official": true,
+      "config": {
+        "type": "http",
+        "url": "https://bigquerydatatransfer.googleapis.com/mcp"
+      },
+      "scopes": [
+        "https://www.googleapis.com/auth/cloud-platform"
+      ],
+      "auth": "oauth-no-dcr",
+      "notes": "Catalogued from Google's supported-products page; never probed, so its tool count and schema cost are unknown."
+    },
+    "bigquerymigration": {
+      "kind": "remote",
+      "status": "listed",
+      "title": "BigQuery Migration",
+      "official": true,
+      "config": {
+        "type": "http",
+        "url": "https://bigquerymigration.googleapis.com/mcp"
+      },
+      "scopes": [
+        "https://www.googleapis.com/auth/cloud-platform"
+      ],
+      "auth": "oauth-no-dcr",
+      "notes": "Catalogued from Google's supported-products page; never probed, so its tool count and schema cost are unknown."
     },
     "bigtable": {
       "kind": "remote",
@@ -109,6 +199,51 @@
         "https://www.googleapis.com/auth/cloud-platform"
       ],
       "auth": "oauth-no-dcr"
+    },
+    "calendar": {
+      "kind": "remote",
+      "status": "listed",
+      "title": "Google Calendar",
+      "official": true,
+      "preview": true,
+      "config": {
+        "type": "http",
+        "url": "https://calendarmcp.googleapis.com/mcp/v1"
+      },
+      "auth": "oauth-no-dcr",
+      "notes": "Developer Preview, never probed. The gws-calendar* skills cover the same ground through the CLI at near-zero context cost."
+    },
+    "chat": {
+      "kind": "remote",
+      "status": "listed",
+      "title": "Google Chat",
+      "official": true,
+      "preview": true,
+      "config": {
+        "type": "http",
+        "url": "https://chatmcp.googleapis.com/mcp/v1"
+      },
+      "auth": "oauth-no-dcr",
+      "notes": "Developer Preview, never probed. The gws-chat* skills cover the same ground through the CLI at near-zero context cost."
+    },
+    "chrome-devtools": {
+      "kind": "local",
+      "status": "verified",
+      "title": "Chrome DevTools",
+      "official": false,
+      "repo": "https://github.com/ChromeDevTools/chrome-devtools-mcp",
+      "config": {
+        "command": "npx",
+        "args": [
+          "-y",
+          "chrome-devtools-mcp@latest"
+        ]
+      },
+      "requires": [
+        "npx"
+      ],
+      "auth": "none",
+      "notes": "Google's Chrome DevTools team, not the `google` org. Debug, profile and inspect the network of real pages. Its own .claude-plugin pins @1.6.0 and lags npm, so this entry tracks @latest instead; `/plugin marketplace add ChromeDevTools/chrome-devtools-mcp` installs the pinned version plus 7 skills."
     },
     "chronicle": {
       "kind": "remote",
@@ -146,6 +281,26 @@
       "auth": "oauth-no-dcr",
       "warning": "3.7 MB of schema across 70 tools — by far the most expensive server here, ~8x cloudsql. Only enable it in a project that genuinely does SecOps.",
       "notes": "Tool count and schema size measured in `us` only; the other regions were confirmed to resolve but not measured. An earlier revision recorded this as unavailable because it was probed without a region."
+    },
+    "clasp": {
+      "kind": "local",
+      "status": "verified",
+      "title": "Apps Script (clasp)",
+      "official": true,
+      "repo": "https://github.com/google/clasp",
+      "config": {
+        "command": "npx",
+        "args": [
+          "-y",
+          "@google/clasp",
+          "mcp"
+        ]
+      },
+      "requires": [
+        "npx"
+      ],
+      "auth": "clasp-login",
+      "notes": "The natural companion to the gws-script and gws-script-push skills. google/clasp ships .claude-plugin/plugin.json but NO marketplace.json, so `/plugin marketplace add google/clasp` will fail — use this entry instead. Run `clasp login` once first."
     },
     "cloud-run": {
       "kind": "remote",
@@ -202,6 +357,36 @@
       ],
       "auth": "oauth-no-dcr"
     },
+    "cloudlocationfinder": {
+      "kind": "remote",
+      "status": "listed",
+      "title": "Cloud Location Finder",
+      "official": true,
+      "config": {
+        "type": "http",
+        "url": "https://cloudlocationfinder.googleapis.com/mcp"
+      },
+      "scopes": [
+        "https://www.googleapis.com/auth/cloud-platform"
+      ],
+      "auth": "oauth-no-dcr",
+      "notes": "Catalogued from Google's supported-products page; never probed, so its tool count and schema cost are unknown."
+    },
+    "cloudproductregistry": {
+      "kind": "remote",
+      "status": "listed",
+      "title": "Cloud Product Registry",
+      "official": true,
+      "config": {
+        "type": "http",
+        "url": "https://cloudproductregistry.googleapis.com/mcp"
+      },
+      "scopes": [
+        "https://www.googleapis.com/auth/cloud-platform"
+      ],
+      "auth": "oauth-no-dcr",
+      "notes": "Catalogued from Google's supported-products page; never probed, so its tool count and schema cost are unknown."
+    },
     "cloudquotas": {
       "kind": "remote",
       "status": "verified",
@@ -237,6 +422,21 @@
       "status": "verified",
       "measuredAt": "2026-08-05"
     },
+    "cloudsupport": {
+      "kind": "remote",
+      "status": "listed",
+      "title": "Cloud Support",
+      "official": true,
+      "config": {
+        "type": "http",
+        "url": "https://cloudsupport.googleapis.com/mcp"
+      },
+      "scopes": [
+        "https://www.googleapis.com/auth/cloud-platform"
+      ],
+      "auth": "oauth-no-dcr",
+      "notes": "Catalogued from Google's supported-products page; never probed, so its tool count and schema cost are unknown."
+    },
     "cloudtrace": {
       "kind": "remote",
       "status": "verified",
@@ -270,6 +470,51 @@
       "auth": "oauth-no-dcr",
       "status": "verified",
       "measuredAt": "2026-08-05"
+    },
+    "databasecenter": {
+      "kind": "remote",
+      "status": "listed",
+      "title": "Database Center",
+      "official": true,
+      "config": {
+        "type": "http",
+        "url": "https://databasecenter.googleapis.com/mcp"
+      },
+      "scopes": [
+        "https://www.googleapis.com/auth/cloud-platform"
+      ],
+      "auth": "oauth-no-dcr",
+      "notes": "Catalogued from Google's supported-products page; never probed, so its tool count and schema cost are unknown."
+    },
+    "datalineage": {
+      "kind": "remote",
+      "status": "listed",
+      "title": "Data Lineage",
+      "official": true,
+      "config": {
+        "type": "http",
+        "url": "https://datalineage.googleapis.com/mcp"
+      },
+      "scopes": [
+        "https://www.googleapis.com/auth/cloud-platform"
+      ],
+      "auth": "oauth-no-dcr",
+      "notes": "Catalogued from Google's supported-products page; never probed, so its tool count and schema cost are unknown."
+    },
+    "datamigration": {
+      "kind": "remote",
+      "status": "listed",
+      "title": "Database Migration Service",
+      "official": true,
+      "config": {
+        "type": "http",
+        "url": "https://datamigration.googleapis.com/mcp"
+      },
+      "scopes": [
+        "https://www.googleapis.com/auth/cloud-platform"
+      ],
+      "auth": "oauth-no-dcr",
+      "notes": "Catalogued from Google's supported-products page; never probed, so its tool count and schema cost are unknown."
     },
     "dataplex": {
       "kind": "remote",
@@ -305,6 +550,21 @@
       ],
       "auth": "oauth-no-dcr"
     },
+    "datastream": {
+      "kind": "remote",
+      "status": "listed",
+      "title": "Datastream",
+      "official": true,
+      "config": {
+        "type": "http",
+        "url": "https://datastream.googleapis.com/mcp"
+      },
+      "scopes": [
+        "https://www.googleapis.com/auth/cloud-platform"
+      ],
+      "auth": "oauth-no-dcr",
+      "notes": "Catalogued from Google's supported-products page; never probed, so its tool count and schema cost are unknown."
+    },
     "dev-knowledge": {
       "kind": "remote",
       "title": "Developer Knowledge API",
@@ -322,6 +582,21 @@
       "bundledIn": "google-cloud-mcp",
       "status": "verified",
       "measuredAt": "2026-08-05"
+    },
+    "discoveryengine": {
+      "kind": "remote",
+      "status": "listed",
+      "title": "Agent / Discovery Engine",
+      "official": true,
+      "config": {
+        "type": "http",
+        "url": "https://discoveryengine.googleapis.com/mcp"
+      },
+      "scopes": [
+        "https://www.googleapis.com/auth/cloud-platform"
+      ],
+      "auth": "oauth-no-dcr",
+      "notes": "Catalogued from Google's supported-products page; never probed, so its tool count and schema cost are unknown."
     },
     "drive": {
       "kind": "remote",
@@ -357,6 +632,21 @@
         "https://www.googleapis.com/auth/cloud-platform"
       ],
       "auth": "oauth-no-dcr"
+    },
+    "file": {
+      "kind": "remote",
+      "status": "listed",
+      "title": "Filestore",
+      "official": true,
+      "config": {
+        "type": "http",
+        "url": "https://file.googleapis.com/mcp"
+      },
+      "scopes": [
+        "https://www.googleapis.com/auth/cloud-platform"
+      ],
+      "auth": "oauth-no-dcr",
+      "notes": "Catalogued from Google's supported-products page; never probed, so its tool count and schema cost are unknown."
     },
     "firebase": {
       "kind": "local",
@@ -538,6 +828,21 @@
       "notes": "Google publishes no official GSC MCP server. Chosen over ahonn/mcp-server-gsc and AkashRajpurohit/gsc-mcp because it is the only one with browser OAuth — a service account would have to be added by hand as a user on every property. Writes stay off unless GSC_ALLOW_DESTRUCTIVE=true.",
       "status": "verified"
     },
+    "homedevelopers": {
+      "kind": "remote",
+      "status": "listed",
+      "title": "Google Home Developers",
+      "official": true,
+      "config": {
+        "type": "http",
+        "url": "https://homedevelopers.googleapis.com/mcp"
+      },
+      "scopes": [
+        "https://www.googleapis.com/auth/cloud-platform"
+      ],
+      "auth": "oauth-no-dcr",
+      "notes": "Catalogued from Google's supported-products page; never probed, so its tool count and schema cost are unknown."
+    },
     "logging": {
       "kind": "remote",
       "status": "verified",
@@ -577,6 +882,36 @@
       "requiresApi": "mapstools.googleapis.com",
       "notes": "The ONLY remote server in this catalogue that authenticates without OAuth, and therefore the only one that works end to end without attaching your own OAuth client. Enable the API first: gcloud services enable mapstools.googleapis.com. An API key in a header is a bearer credential — restrict it to the Maps Tools API in the console. Google's docs list 3 tools; 5 were measured on 2026-08-05."
     },
+    "mapscodeassist": {
+      "kind": "remote",
+      "status": "listed",
+      "title": "Maps Platform Code Assist",
+      "official": true,
+      "config": {
+        "type": "http",
+        "url": "https://mapscodeassist.googleapis.com/mcp"
+      },
+      "scopes": [
+        "https://www.googleapis.com/auth/cloud-platform"
+      ],
+      "auth": "oauth-no-dcr",
+      "notes": "Catalogued from Google's supported-products page; never probed, so its tool count and schema cost are unknown."
+    },
+    "memorystore": {
+      "kind": "remote",
+      "status": "listed",
+      "title": "Memorystore",
+      "official": true,
+      "config": {
+        "type": "http",
+        "url": "https://memorystore.googleapis.com/mcp"
+      },
+      "scopes": [
+        "https://www.googleapis.com/auth/cloud-platform"
+      ],
+      "auth": "oauth-no-dcr",
+      "notes": "Catalogued from Google's supported-products page; never probed, so its tool count and schema cost are unknown."
+    },
     "monitoring": {
       "kind": "remote",
       "status": "verified",
@@ -593,6 +928,79 @@
         "https://www.googleapis.com/auth/monitoring.read"
       ],
       "auth": "oauth-no-dcr"
+    },
+    "netapp": {
+      "kind": "remote",
+      "status": "listed",
+      "title": "NetApp Volumes",
+      "official": true,
+      "config": {
+        "type": "http",
+        "url": "https://netapp.googleapis.com/mcp"
+      },
+      "scopes": [
+        "https://www.googleapis.com/auth/cloud-platform"
+      ],
+      "auth": "oauth-no-dcr",
+      "notes": "Catalogued from Google's supported-products page; never probed, so its tool count and schema cost are unknown."
+    },
+    "networkmanagement": {
+      "kind": "remote",
+      "status": "listed",
+      "title": "Network Management",
+      "official": true,
+      "config": {
+        "type": "http",
+        "url": "https://networkmanagement.googleapis.com/mcp"
+      },
+      "scopes": [
+        "https://www.googleapis.com/auth/cloud-platform"
+      ],
+      "auth": "oauth-no-dcr",
+      "notes": "Catalogued from Google's supported-products page; never probed, so its tool count and schema cost are unknown."
+    },
+    "oracledatabase": {
+      "kind": "remote",
+      "status": "listed",
+      "title": "Oracle Database@Google Cloud",
+      "official": true,
+      "config": {
+        "type": "http",
+        "url": "https://oracledatabase.googleapis.com/mcp"
+      },
+      "scopes": [
+        "https://www.googleapis.com/auth/cloud-platform"
+      ],
+      "auth": "oauth-no-dcr",
+      "notes": "Catalogued from Google's supported-products page; never probed, so its tool count and schema cost are unknown."
+    },
+    "paydeveloper": {
+      "kind": "remote",
+      "status": "listed",
+      "title": "Google Pay Developer",
+      "official": true,
+      "config": {
+        "type": "http",
+        "url": "https://paydeveloper.googleapis.com/mcp"
+      },
+      "scopes": [
+        "https://www.googleapis.com/auth/cloud-platform"
+      ],
+      "auth": "oauth-no-dcr",
+      "notes": "Catalogued from Google's supported-products page; never probed, so its tool count and schema cost are unknown."
+    },
+    "people": {
+      "kind": "remote",
+      "status": "listed",
+      "title": "Google People",
+      "official": true,
+      "preview": true,
+      "config": {
+        "type": "http",
+        "url": "https://people.googleapis.com/mcp/v1"
+      },
+      "auth": "oauth-no-dcr",
+      "notes": "Developer Preview, never probed. The gws-people* skills cover the same ground through the CLI at near-zero context cost."
     },
     "pubsub": {
       "kind": "remote",
@@ -629,6 +1037,21 @@
       "auth": "oauth-no-dcr",
       "notes": "FinOps: surfaces cost and security recommendations across the project."
     },
+    "redis": {
+      "kind": "remote",
+      "status": "listed",
+      "title": "Memorystore for Redis",
+      "official": true,
+      "config": {
+        "type": "http",
+        "url": "https://redis.googleapis.com/mcp"
+      },
+      "scopes": [
+        "https://www.googleapis.com/auth/cloud-platform"
+      ],
+      "auth": "oauth-no-dcr",
+      "notes": "Catalogued from Google's supported-products page; never probed, so its tool count and schema cost are unknown."
+    },
     "resource-manager": {
       "kind": "remote",
       "title": "Cloud Resource Manager",
@@ -647,6 +1070,36 @@
       "notes": "Cheapest remote server — use it to validate the OAuth client flow before enabling any other.",
       "status": "verified",
       "measuredAt": "2026-08-05"
+    },
+    "saasservicemgmt": {
+      "kind": "remote",
+      "status": "listed",
+      "title": "SaaS Runtime",
+      "official": true,
+      "config": {
+        "type": "http",
+        "url": "https://saasservicemgmt.googleapis.com/mcp"
+      },
+      "scopes": [
+        "https://www.googleapis.com/auth/cloud-platform"
+      ],
+      "auth": "oauth-no-dcr",
+      "notes": "Catalogued from Google's supported-products page; never probed, so its tool count and schema cost are unknown."
+    },
+    "servicehealth": {
+      "kind": "remote",
+      "status": "listed",
+      "title": "Service Health",
+      "official": true,
+      "config": {
+        "type": "http",
+        "url": "https://servicehealth.googleapis.com/mcp"
+      },
+      "scopes": [
+        "https://www.googleapis.com/auth/cloud-platform"
+      ],
+      "auth": "oauth-no-dcr",
+      "notes": "Catalogued from Google's supported-products page; never probed, so its tool count and schema cost are unknown."
     },
     "spanner": {
       "kind": "remote",
