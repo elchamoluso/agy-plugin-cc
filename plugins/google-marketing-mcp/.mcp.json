@@ -1,0 +1,35 @@
+{
+  "mcpServers": {
+    "google-ads": {
+      "command": "pipx",
+      "args": [
+        "run",
+        "--spec",
+        "git+https://github.com/googleads/google-ads-mcp.git",
+        "google-ads-mcp"
+      ],
+      "env": {
+        "GOOGLE_PROJECT_ID": "${user_config.GOOGLE_PROJECT_ID}",
+        "GOOGLE_ADS_DEVELOPER_TOKEN": "${user_config.GOOGLE_ADS_DEVELOPER_TOKEN}",
+        "GOOGLE_ADS_LOGIN_CUSTOMER_ID": "${user_config.GOOGLE_ADS_LOGIN_CUSTOMER_ID}",
+        "GOOGLE_APPLICATION_CREDENTIALS": "${user_config.GOOGLE_APPLICATION_CREDENTIALS}"
+      }
+    },
+    "analytics": {
+      "command": "pipx",
+      "args": ["run", "analytics-mcp"],
+      "env": {
+        "GOOGLE_PROJECT_ID": "${user_config.GOOGLE_PROJECT_ID}",
+        "GOOGLE_APPLICATION_CREDENTIALS": "${user_config.GOOGLE_APPLICATION_CREDENTIALS}"
+      }
+    },
+    "gsc": {
+      "command": "uvx",
+      "args": ["mcp-search-console"],
+      "env": {
+        "GSC_OAUTH_CLIENT_SECRETS_FILE": "${user_config.GSC_OAUTH_CLIENT_SECRETS_FILE}",
+        "GSC_ALLOW_DESTRUCTIVE": "${GSC_ALLOW_DESTRUCTIVE:-false}"
+      }
+    }
+  }
+}

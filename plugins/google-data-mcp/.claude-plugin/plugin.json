@@ -1,0 +1,17 @@
+{
+  "name": "google-data-mcp",
+  "version": "0.1.0",
+  "description": "BigQuery plus the MCP Toolbox for Databases. ~133 KB of schema per session — enable it per project, not globally.",
+  "author": {
+    "name": "Jesús M. Ferreira"
+  },
+  "userConfig": {
+    "TOOLBOX_PREBUILT": {
+      "type": "string",
+      "title": "MCP Toolbox backend",
+      "description": "Which prebuilt database configuration the Toolbox loads: bigquery, postgres, mysql, spanner, alloydb-postgres, cloud-sql-postgres, firestore…",
+      "required": false,
+      "default": "bigquery"
+    }
+  }
+}

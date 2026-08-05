@@ -1,0 +1,8 @@
+{
+  "name": "google-cloud-mcp",
+  "version": "0.1.0",
+  "description": "The cheap Google Cloud MCP servers: gcloud, Cloud Run, Resource Manager and Developer Knowledge. ~57 KB of schema — small enough to leave on.",
+  "author": {
+    "name": "Jesús M. Ferreira"
+  }
+}

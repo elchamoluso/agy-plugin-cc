@@ -1,0 +1,41 @@
+{
+  "name": "google-marketing-mcp",
+  "version": "0.1.0",
+  "description": "Google Ads, Analytics (GA4) and Search Console over MCP. Prompts for its credentials at install time; nothing is stored in this repo.",
+  "author": {
+    "name": "Jesús M. Ferreira"
+  },
+  "userConfig": {
+    "GOOGLE_PROJECT_ID": {
+      "type": "string",
+      "title": "GCP project",
+      "description": "Quota and billing project for the Ads and Analytics APIs. `gcloud config get-value project`.",
+      "required": false
+    },
+    "GOOGLE_ADS_DEVELOPER_TOKEN": {
+      "type": "string",
+      "title": "Google Ads developer token",
+      "description": "Google Ads → Tools → API Center. Needs at least Explorer access. Leave empty if you do not use Google Ads.",
+      "required": false,
+      "sensitive": true
+    },
+    "GOOGLE_ADS_LOGIN_CUSTOMER_ID": {
+      "type": "string",
+      "title": "Manager (MCC) customer ID",
+      "description": "Only when you access accounts through a manager account. Digits only, no dashes.",
+      "required": false
+    },
+    "GOOGLE_APPLICATION_CREDENTIALS": {
+      "type": "file",
+      "title": "Service account JSON",
+      "description": "Leave empty to use your gcloud Application Default Credentials, which is the usual choice.",
+      "required": false
+    },
+    "GSC_OAUTH_CLIENT_SECRETS_FILE": {
+      "type": "file",
+      "title": "Search Console OAuth client secrets",
+      "description": "OAuth client JSON from the GCP console. This is what lets Search Console see every property you already have access to, instead of needing a service account added by hand to each one.",
+      "required": false
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "gcloud": {
+      "command": "npx",
+      "args": ["-y", "@google-cloud/gcloud-mcp"]
+    },
+    "cloud-run": {
+      "type": "http",
+      "url": "https://run.googleapis.com/mcp"
+    },
+    "resource-manager": {
+      "type": "http",
+      "url": "https://cloudresourcemanager.googleapis.com/mcp"
+    },
+    "dev-knowledge": {
+      "type": "http",
+      "url": "https://developerknowledge.googleapis.com/mcp"
+    }
+  }
+}

@@ -4,8 +4,8 @@
     "name": "Jesús M. Ferreira"
   },
   "metadata": {
-    "description": "Antigravity CLI (agy) integration for Claude Code.",
-    "version": "0.2.0"
+    "description": "Google tooling for Claude Code: the Antigravity CLI bridge, Workspace skills, and Google's MCP servers split into small opt-in bundles.",
+    "version": "0.3.0"
   },
   "plugins": [
     {
@@ -16,6 +16,51 @@
         "name": "Jesús M. Ferreira"
       },
       "source": "./plugins/agy"
+    },
+    {
+      "name": "google",
+      "description": "Google Workspace skills, auth bootstrap and a catalogue of Google's MCP servers. Ships no MCP servers of its own — /google:mcp enables them per project.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Jesús M. Ferreira"
+      },
+      "source": "./plugins/google"
+    },
+    {
+      "name": "google-workspace-recipes",
+      "description": "Ready-made Google Workspace workflows: 41 recipe-* task templates and 10 persona-* role playbooks. Needs the `google` plugin for the underlying gws-* capabilities.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Jesús M. Ferreira"
+      },
+      "source": "./plugins/google-workspace-recipes"
+    },
+    {
+      "name": "google-cloud-mcp",
+      "description": "The cheap Google Cloud MCP servers: gcloud, Cloud Run, Resource Manager and Developer Knowledge. ~57 KB of schema — small enough to leave on.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Jesús M. Ferreira"
+      },
+      "source": "./plugins/google-cloud-mcp"
+    },
+    {
+      "name": "google-marketing-mcp",
+      "description": "Google Ads, Analytics (GA4) and Search Console over MCP. Prompts for its credentials at install time; nothing is stored in this repo.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Jesús M. Ferreira"
+      },
+      "source": "./plugins/google-marketing-mcp"
+    },
+    {
+      "name": "google-data-mcp",
+      "description": "BigQuery plus the MCP Toolbox for Databases. ~133 KB of schema per session — enable it per project, not globally.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Jesús M. Ferreira"
+      },
+      "source": "./plugins/google-data-mcp"
     }
   ]
 }

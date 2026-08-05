@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "bigquery": {
+      "type": "http",
+      "url": "https://bigquery.googleapis.com/mcp"
+    },
+    "toolbox": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@toolbox-sdk/server",
+        "--prebuilt=${user_config.TOOLBOX_PREBUILT}",
+        "--stdio"
+      ]
+    }
+  }
+}
