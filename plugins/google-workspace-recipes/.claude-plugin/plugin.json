@@ -1,0 +1,8 @@
+{
+  "name": "google-workspace-recipes",
+  "version": "0.1.0",
+  "description": "Ready-made Google Workspace workflows: 41 recipe-* task templates and 10 persona-* role playbooks. Needs the `google` plugin for the underlying gws-* capabilities.",
+  "author": {
+    "name": "Jesús M. Ferreira"
+  }
+}

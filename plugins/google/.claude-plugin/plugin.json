@@ -1,0 +1,16 @@
+{
+  "name": "google",
+  "version": "0.1.0",
+  "description": "Google Workspace skills, auth bootstrap and a catalogue of Google's MCP servers. Ships no MCP servers of its own — /google:mcp enables them per project.",
+  "author": {
+    "name": "Jesús M. Ferreira"
+  },
+  "userConfig": {
+    "GOOGLE_PROJECT_ID": {
+      "type": "string",
+      "title": "Default GCP project",
+      "description": "Used as the quota project for Application Default Credentials and as the default in the MCP catalogue. Find it with `gcloud config get-value project`.",
+      "required": false
+    }
+  }
+}

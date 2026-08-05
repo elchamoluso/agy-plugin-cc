@@ -1,0 +1,250 @@
+{
+  "$comment": "Catalogue of Google MCP servers. NOT active configuration — /google:mcp reads this and writes chosen entries into the PROJECT's .mcp.json. No credentials here, ever: env values are variable names the user supplies. toolCount/schemaBytes were measured, not estimated; see measuredAt.",
+  "version": 1,
+  "measuredAt": "2026-08-05",
+  "notes": {
+    "remoteAuth": "Every *.googleapis.com/mcp endpoint answers initialize and tools/list WITHOUT credentials, so it connects, dumps its whole tool schema into the session, and only fails when a tool is actually called. accounts.google.com exposes no registration_endpoint, so Dynamic Client Registration is impossible and Claude Code cannot self-register: pass your own OAuth client with `claude mcp add --client-id <id> --client-secret --callback-port <port>`. Run /google:setup for the walkthrough.",
+    "cost": "Measured 2026-08-05: the 13 reachable remote servers total 151 tools and 1580 KB of JSON schema — roughly 400k tokens if enabled together. Enable per project, not globally."
+  },
+  "servers": {
+    "bigquery": {
+      "kind": "remote",
+      "title": "BigQuery",
+      "official": true,
+      "toolCount": 6,
+      "schemaBytes": 132813,
+      "config": { "type": "http", "url": "https://bigquery.googleapis.com/mcp" },
+      "scopes": ["https://www.googleapis.com/auth/bigquery"],
+      "auth": "oauth-no-dcr",
+      "bundledIn": "google-data-mcp"
+    },
+    "cloud-run": {
+      "kind": "remote",
+      "title": "Cloud Run",
+      "official": true,
+      "toolCount": 5,
+      "schemaBytes": 43591,
+      "config": { "type": "http", "url": "https://run.googleapis.com/mcp" },
+      "scopes": ["https://www.googleapis.com/auth/cloud-platform"],
+      "auth": "oauth-no-dcr",
+      "bundledIn": "google-cloud-mcp"
+    },
+    "resource-manager": {
+      "kind": "remote",
+      "title": "Cloud Resource Manager",
+      "official": true,
+      "toolCount": 1,
+      "schemaBytes": 7382,
+      "config": { "type": "http", "url": "https://cloudresourcemanager.googleapis.com/mcp" },
+      "scopes": ["https://www.googleapis.com/auth/cloud-platform"],
+      "auth": "oauth-no-dcr",
+      "bundledIn": "google-cloud-mcp",
+      "notes": "Cheapest remote server — use it to validate the OAuth client flow before enabling any other."
+    },
+    "dev-knowledge": {
+      "kind": "remote",
+      "title": "Developer Knowledge API",
+      "official": true,
+      "toolCount": 3,
+      "schemaBytes": 6175,
+      "config": { "type": "http", "url": "https://developerknowledge.googleapis.com/mcp" },
+      "scopes": ["https://www.googleapis.com/auth/cloud-platform"],
+      "auth": "oauth-no-dcr",
+      "bundledIn": "google-cloud-mcp"
+    },
+    "gke": {
+      "kind": "remote",
+      "title": "Google Kubernetes Engine",
+      "official": true,
+      "toolCount": 23,
+      "schemaBytes": 57648,
+      "config": { "type": "http", "url": "https://container.googleapis.com/mcp" },
+      "scopes": ["https://www.googleapis.com/auth/cloud-platform"],
+      "auth": "oauth-no-dcr",
+      "notes": "Prefer this over GoogleCloudPlatform/gke-mcp locally — that one needs a Go toolchain."
+    },
+    "firestore": {
+      "kind": "remote",
+      "title": "Firestore",
+      "official": true,
+      "toolCount": 15,
+      "schemaBytes": 153734,
+      "config": { "type": "http", "url": "https://firestore.googleapis.com/mcp" },
+      "scopes": ["https://www.googleapis.com/auth/datastore"],
+      "auth": "oauth-no-dcr"
+    },
+    "spanner": {
+      "kind": "remote",
+      "title": "Spanner",
+      "official": true,
+      "toolCount": 15,
+      "schemaBytes": 168651,
+      "config": { "type": "http", "url": "https://spanner.googleapis.com/mcp" },
+      "scopes": ["https://www.googleapis.com/auth/cloud-platform"],
+      "auth": "oauth-no-dcr"
+    },
+    "alloydb": {
+      "kind": "remote",
+      "title": "AlloyDB for PostgreSQL",
+      "official": true,
+      "toolCount": 17,
+      "schemaBytes": 197365,
+      "config": { "type": "http", "url": "https://alloydb.googleapis.com/mcp" },
+      "scopes": ["https://www.googleapis.com/auth/cloud-platform"],
+      "auth": "oauth-no-dcr"
+    },
+    "bigtable": {
+      "kind": "remote",
+      "title": "Bigtable",
+      "official": true,
+      "toolCount": 1,
+      "schemaBytes": 45401,
+      "config": { "type": "http", "url": "https://bigtable.googleapis.com/mcp" },
+      "scopes": ["https://www.googleapis.com/auth/cloud-platform"],
+      "auth": "oauth-no-dcr"
+    },
+    "cloudsql": {
+      "kind": "remote",
+      "title": "Cloud SQL Admin",
+      "official": true,
+      "toolCount": 15,
+      "schemaBytes": 476630,
+      "config": { "type": "http", "url": "https://sqladmin.googleapis.com/mcp" },
+      "scopes": ["https://www.googleapis.com/auth/sqlservice.admin"],
+      "auth": "oauth-no-dcr",
+      "notes": "The most expensive server measured: 465 KB of schema on its own."
+    },
+    "compute": {
+      "kind": "remote",
+      "title": "Compute Engine",
+      "official": true,
+      "toolCount": 29,
+      "schemaBytes": 258763,
+      "config": { "type": "http", "url": "https://compute.googleapis.com/mcp" },
+      "scopes": ["https://www.googleapis.com/auth/compute"],
+      "auth": "oauth-no-dcr"
+    },
+    "gmail": {
+      "kind": "remote",
+      "title": "Gmail",
+      "official": true,
+      "toolCount": 13,
+      "schemaBytes": 45769,
+      "config": { "type": "http", "url": "https://gmailmcp.googleapis.com/mcp/v1" },
+      "scopes": ["https://www.googleapis.com/auth/gmail.modify"],
+      "auth": "oauth-no-dcr",
+      "notes": "The gws-gmail-* skills cover the same ground through the CLI at near-zero context cost."
+    },
+    "drive": {
+      "kind": "remote",
+      "title": "Google Drive",
+      "official": true,
+      "toolCount": 8,
+      "schemaBytes": 23835,
+      "config": { "type": "http", "url": "https://drivemcp.googleapis.com/mcp/v1" },
+      "scopes": ["https://www.googleapis.com/auth/drive"],
+      "auth": "oauth-no-dcr",
+      "notes": "Overlaps the gws-drive-* skills; prefer those unless you need the MCP surface."
+    },
+    "workspace-developer": {
+      "kind": "remote",
+      "title": "Workspace Developer docs",
+      "official": true,
+      "config": { "type": "http", "url": "https://workspace-developer.goog/mcp" },
+      "auth": "none",
+      "notes": "Replaces the archived googleworkspace/developer-mcp npm package. Often already present in ~/.claude.json — /google:mcp refuses to duplicate it."
+    },
+    "gcloud": {
+      "kind": "local",
+      "title": "gcloud CLI",
+      "official": true,
+      "repo": "https://github.com/googleapis/gcloud-mcp",
+      "config": { "command": "npx", "args": ["-y", "@google-cloud/gcloud-mcp"] },
+      "requires": ["npx", "gcloud"],
+      "auth": "gcloud-adc",
+      "bundledIn": "google-cloud-mcp"
+    },
+    "toolbox": {
+      "kind": "local",
+      "title": "MCP Toolbox for Databases",
+      "official": true,
+      "repo": "https://github.com/googleapis/mcp-toolbox",
+      "config": {
+        "command": "npx",
+        "args": ["-y", "@toolbox-sdk/server", "--prebuilt=${TOOLBOX_PREBUILT:-bigquery}", "--stdio"]
+      },
+      "requires": ["npx"],
+      "auth": "gcloud-adc",
+      "bundledIn": "google-data-mcp",
+      "notes": "Renamed from googleapis/genai-toolbox. Covers AlloyDB, BigQuery, Cloud SQL, Spanner, Firestore plus Postgres, MySQL, Mongo, Redis and more. Pick the backend with TOOLBOX_PREBUILT."
+    },
+    "google-ads": {
+      "kind": "local",
+      "title": "Google Ads",
+      "official": true,
+      "repo": "https://github.com/googleads/google-ads-mcp",
+      "config": {
+        "command": "pipx",
+        "args": ["run", "--spec", "git+https://github.com/googleads/google-ads-mcp.git", "google-ads-mcp"]
+      },
+      "requires": ["pipx"],
+      "auth": "adc+developer-token",
+      "env": ["GOOGLE_PROJECT_ID", "GOOGLE_ADS_DEVELOPER_TOKEN", "GOOGLE_ADS_LOGIN_CUSTOMER_ID", "GOOGLE_APPLICATION_CREDENTIALS"],
+      "scopes": ["https://www.googleapis.com/auth/adwords"],
+      "bundledIn": "google-marketing-mcp",
+      "warning": "Install from git only. The PyPI package google-ads-mcp is a dead 0.0.1 stub. The older google-marketing-solutions/google_ads_mcp_server repo is archived and redirects here.",
+      "notes": "Needs a developer token with at least Explorer access. GOOGLE_ADS_LOGIN_CUSTOMER_ID only when entering through an MCC."
+    },
+    "analytics": {
+      "kind": "local",
+      "title": "Google Analytics (GA4)",
+      "official": true,
+      "repo": "https://github.com/googleanalytics/google-analytics-mcp",
+      "config": { "command": "pipx", "args": ["run", "analytics-mcp"] },
+      "requires": ["pipx"],
+      "auth": "adc",
+      "env": ["GOOGLE_PROJECT_ID", "GOOGLE_APPLICATION_CREDENTIALS"],
+      "scopes": ["https://www.googleapis.com/auth/analytics.readonly"],
+      "bundledIn": "google-marketing-mcp",
+      "notes": "Read-only. Covers both the Admin API (metadata) and the Data API (reporting). Enable both APIs in the GCP project."
+    },
+    "gsc": {
+      "kind": "local",
+      "title": "Google Search Console",
+      "official": false,
+      "repo": "https://github.com/AminForou/mcp-gsc",
+      "config": { "command": "uvx", "args": ["mcp-search-console"] },
+      "requires": ["uvx"],
+      "auth": "oauth-or-service-account",
+      "env": ["GSC_OAUTH_CLIENT_SECRETS_FILE", "GSC_CREDENTIALS_PATH", "GSC_SKIP_OAUTH", "GSC_ALLOW_DESTRUCTIVE"],
+      "scopes": ["https://www.googleapis.com/auth/webmasters.readonly"],
+      "bundledIn": "google-marketing-mcp",
+      "notes": "Google publishes no official GSC MCP server. Chosen over ahonn/mcp-server-gsc and AkashRajpurohit/gsc-mcp because it is the only one with browser OAuth — a service account would have to be added by hand as a user on every property. Writes stay off unless GSC_ALLOW_DESTRUCTIVE=true."
+    },
+    "firebase": {
+      "kind": "local",
+      "title": "Firebase",
+      "official": true,
+      "repo": "https://github.com/firebase/firebase-tools",
+      "config": { "command": "npx", "args": ["-y", "firebase-tools@latest", "mcp"] },
+      "requires": ["npx"],
+      "auth": "firebase-login",
+      "notes": "The MCP server ships inside firebase-tools; there is no standalone repo."
+    },
+    "cloud-run-local": {
+      "kind": "local",
+      "title": "Cloud Run (deploy)",
+      "official": true,
+      "repo": "https://github.com/GoogleCloudPlatform/cloud-run-mcp",
+      "config": { "command": "npx", "args": ["-y", "@google-cloud/cloud-run-mcp"] },
+      "requires": ["npx", "gcloud"],
+      "auth": "gcloud-adc",
+      "notes": "Deploys apps to Cloud Run. The remote cloud-run server is read/manage oriented; this one builds and ships."
+    }
+  },
+  "unavailable": {
+    "storage": "https://storage.googleapis.com/mcp returns 400 InvalidArgument — Cloud Storage has no MCP endpoint under that hostname.",
+    "chronicle": "https://chronicle.googleapis.com/mcp serves an HTML error page, not MCP. Google Security Operations is at github.com/google/mcp-security instead.",
+    "gws": "The Google Workspace CLI removed its `gws mcp` subcommand in 0.8.0 — a Discovery-API-wide MCP server exposed 200-400 tools. The gws-* skills in this plugin replace it at a fraction of the context cost."
+  }
+}
