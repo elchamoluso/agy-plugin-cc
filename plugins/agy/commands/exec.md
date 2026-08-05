@@ -1,6 +1,6 @@
 ---
 description: Delegate a task to agy WITH full tool permissions (--dangerously-skip-permissions) — agy can read/write files and run commands without confirmation.
-argument-hint: '[--model <alias>] [--timeout <seconds>] <task>'
+argument-hint: '[--model <alias>] [--effort <low|medium|high>] [--timeout <seconds>] <task>'
 disable-model-invocation: true
 allowed-tools: Bash(node:*)
 ---

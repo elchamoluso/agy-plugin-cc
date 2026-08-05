@@ -1,6 +1,6 @@
 ---
 description: Continue the previous agy conversation for this project (multi-turn follow-up in the same Gemini context). Q&A only — tool permissions are never carried over.
-argument-hint: '[--conversation <uuid>] [--model <alias>] [--timeout <seconds>] <follow-up prompt>'
+argument-hint: '[--conversation <uuid>] [--model <alias>] [--effort <low|medium|high>] [--timeout <seconds>] <follow-up prompt>'
 allowed-tools: Bash(node:*)
 ---
 

@@ -1,6 +1,6 @@
 ---
 description: Get a second-opinion code review from agy (Gemini) on the current git changes.
-argument-hint: '[--base <ref>] [--model <alias>] [--timeout <seconds>] [extra instructions]'
+argument-hint: '[--base <ref>] [--model <alias>] [--effort <low|medium|high>] [--timeout <seconds>] [extra instructions]'
 disable-model-invocation: true
 allowed-tools: Bash(node:*), Bash(git:*), AskUserQuestion
 ---
@@ -23,9 +23,12 @@ Execution mode:
 - Small diff (roughly ≤ 5 files): run in the foreground.
 - Larger or unclear: use `AskUserQuestion` exactly once with two options, recommended first: `Run in background (Recommended)` and `Wait for results`. A review typically takes 15–90 seconds.
 
-Foreground flow:
+Foreground flow — run this with the Bash tool, passing the raw arguments as ONE single-quoted
+argument (escape any single quotes inside them as `'\''`; leave every other character exactly as
+the user wrote it — backticks, `$`, double quotes and newlines must reach the script verbatim):
+
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/scripts/agy-companion.mjs" review "$ARGUMENTS"
+node "${CLAUDE_PLUGIN_ROOT}/scripts/agy-companion.mjs" review '<raw arguments, safely single-quoted>'
 ```
 Return the stdout verbatim. Do not paraphrase, summarize, or add commentary, and do not fix any issue it mentions.
 

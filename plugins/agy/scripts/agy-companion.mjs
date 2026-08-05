@@ -13,27 +13,50 @@ import { spawn } from "node:child_process";
 import { binaryAvailable, runCommand, terminateProcessTree, killProcessTree } from "./lib/process.mjs";
 import { collectReviewContext, truncateToBudget, DIFF_BUDGET_BYTES } from "./lib/git.mjs";
 
-const DEFAULT_MODEL = "Gemini 3.1 Pro (High)";
-// agy model names contain spaces and parens, and the `!`-backtick + "$ARGUMENTS" plumbing
-// eats embedded double quotes, so space-free aliases are the reliable way to pick a model.
+// agy accepts both canonical slugs (`gemini-3.1-pro-high`, what `agy models` prints) and
+// display labels (`Gemini 3.1 Pro (High)`). We speak slugs: no spaces, no quoting hazard,
+// and they match what the CLI itself lists.
+const DEFAULT_MODEL = "gemini-3.1-pro-high";
 const MODEL_ALIASES = new Map([
-  ["pro", "Gemini 3.1 Pro (High)"],
-  ["pro-high", "Gemini 3.1 Pro (High)"],
-  ["pro-low", "Gemini 3.1 Pro (Low)"],
-  ["flash", "Gemini 3.5 Flash (Medium)"],
-  ["flash-medium", "Gemini 3.5 Flash (Medium)"],
-  ["flash-high", "Gemini 3.5 Flash (High)"],
-  ["flash-low", "Gemini 3.5 Flash (Low)"],
-  ["sonnet", "Claude Sonnet 4.6 (Thinking)"],
-  ["opus", "Claude Opus 4.6 (Thinking)"],
-  ["gpt-oss", "GPT-OSS 120B (Medium)"]
+  ["pro", "gemini-3.1-pro-high"],
+  ["pro-high", "gemini-3.1-pro-high"],
+  ["pro-low", "gemini-3.1-pro-low"],
+  ["flash", "gemini-3.6-flash-medium"],
+  ["flash-high", "gemini-3.6-flash-high"],
+  ["flash-medium", "gemini-3.6-flash-medium"],
+  ["flash-low", "gemini-3.6-flash-low"],
+  ["flash-3.5", "gemini-3.5-flash-medium"],
+  ["flash-3.5-high", "gemini-3.5-flash-high"],
+  ["flash-3.5-medium", "gemini-3.5-flash-medium"],
+  ["flash-3.5-low", "gemini-3.5-flash-low"],
+  ["sonnet", "claude-sonnet-4-6"],
+  ["opus", "claude-opus-4-6-thinking"],
+  ["gpt-oss", "gpt-oss-120b-medium"]
 ]);
 
-function resolveModel(value) {
-  if (!value) {
-    return DEFAULT_MODEL;
+// agy's contract: a bare family slug (`gemini-3.1-pro`) is rejected with "requires --effort",
+// and a slug that already carries an effort suffix plus `--effort` is rejected with "conflicts".
+// So the effort always travels INSIDE the slug and `--effort` is never forwarded to agy.
+const EFFORTS = new Set(["low", "medium", "high"]);
+const EFFORT_SUFFIX = /-(low|medium|high)$/;
+// These have no effort variants at all; appending one would build a slug agy rejects.
+const NO_EFFORT_MODELS = new Set(["claude-sonnet-4-6", "claude-opus-4-6-thinking"]);
+
+function resolveModel(value, effort) {
+  const model = value ? MODEL_ALIASES.get(value.toLowerCase()) ?? value : DEFAULT_MODEL;
+  if (!effort) {
+    return model;
   }
-  return MODEL_ALIASES.get(value.toLowerCase()) ?? value;
+  if (!EFFORTS.has(effort.toLowerCase())) {
+    throw new Error(`--effort must be one of low, medium, high (got "${effort}")`);
+  }
+  if (NO_EFFORT_MODELS.has(model)) {
+    throw new Error(
+      `Model "${model}" has no effort variants — drop --effort, or pick a model that has them ` +
+        `(e.g. gemini-3.1-pro-${effort.toLowerCase()}).`
+    );
+  }
+  return `${model.replace(EFFORT_SUFFIX, "")}-${effort.toLowerCase()}`;
 }
 const DEFAULT_TIMEOUT_SECONDS = 420;
 const WATCHDOG_GRACE_SECONDS = 30;
@@ -51,6 +74,7 @@ const TOKEN_FILE = path.join(os.homedir(), ".gemini", "antigravity-cli", "antigr
 const VALUE_FLAGS = new Map([
   ["--model", "model"],
   ["-m", "model"],
+  ["--effort", "effort"],
   ["--timeout", "timeout"],
   ["--conversation", "conversation"],
   ["--base", "base"]
@@ -244,13 +268,13 @@ function runAgy(agyArgs, timeoutSeconds) {
 
 async function executePrompt({ prompt, options, skipPermissions, conversationId }) {
   if (!prompt) {
-    throw new Error("Empty prompt. Usage: [--model <alias>] [--timeout <s>] <prompt text> — aliases: pro, pro-low, flash, flash-high, flash-low, sonnet, opus, gpt-oss");
+    throw new Error("Empty prompt. Usage: [--model <alias>] [--effort <low|medium|high>] [--timeout <s>] <prompt text> — aliases: pro, pro-low, flash, flash-high, flash-low, flash-3.5, sonnet, opus, gpt-oss");
   }
   if (Buffer.byteLength(prompt, "utf8") > MAX_PROMPT_BYTES) {
     throw new Error(`Prompt exceeds ${Math.floor(MAX_PROMPT_BYTES / 1024)} KiB (Linux argv limit). Shorten it.`);
   }
 
-  const model = resolveModel(options.model);
+  const model = resolveModel(options.model, options.effort);
   const timeoutSeconds = parseTimeout(options);
   const before = conversationSnapshot();
 
@@ -433,11 +457,15 @@ function handleModels() {
     process.stdout.write(result.stderr);
     process.exit(result.status || 1);
   }
-  process.stdout.write(`\nDefault model used by this plugin: "${DEFAULT_MODEL}"\n`);
+  process.stdout.write(`\nDefault model used by this plugin: ${DEFAULT_MODEL}\n`);
   process.stdout.write("Override per call with --model <alias>. Aliases:\n");
-  for (const [alias, full] of MODEL_ALIASES) {
-    process.stdout.write(`  ${alias.padEnd(13)} → ${full}\n`);
+  for (const [alias, slug] of MODEL_ALIASES) {
+    process.stdout.write(`  ${alias.padEnd(16)} → ${slug}\n`);
   }
+  process.stdout.write(
+    "\n--effort <low|medium|high> rewrites the slug's effort suffix (--model pro --effort low\n" +
+      `→ gemini-3.1-pro-low). Not available for: ${[...NO_EFFORT_MODELS].join(", ")}.\n`
+  );
 }
 
 async function handleSetup() {

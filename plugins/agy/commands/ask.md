@@ -1,6 +1,6 @@
 ---
 description: Ask agy (Gemini via Antigravity CLI) a one-shot question. No file access — pure reasoning/Q&A.
-argument-hint: '[--model <alias>] [--timeout <seconds>] <prompt>'
+argument-hint: '[--model <alias>] [--effort <low|medium|high>] [--timeout <seconds>] <prompt>'
 allowed-tools: Bash(node:*)
 ---
 
