@@ -65,8 +65,10 @@ jobs:
 
             No abras un issue por hallazgo, ni uno para decir que todo está bien.
             El silencio es una salida válida y preferible.
+          # max-turns 40: agy-plugin-cc (1 MB) consumió 28 turnos en el piloto, y hay
+          # repos de 50-68 MB. Pasarse del tope = run fallido y tokens tirados.
           claude_args: |
-            --max-turns 30
+            --max-turns 40
             --model claude-sonnet-5
             --allowedTools "Read,Grep,Glob,Bash(ls:*),Bash(cat:*),Bash(head:*),Bash(wc:*),Bash(find:*),Bash(jq:*),Bash(git log:*),Bash(git diff:*),Bash(git grep:*),Bash(git ls-files:*),Bash(npm:*),Bash(pip:*),Bash(pip3:*),Bash(pip-audit:*),Bash(gh issue list:*),Bash(gh issue view:*),Bash(gh issue create:*),Bash(gh issue comment:*)"
         env:
