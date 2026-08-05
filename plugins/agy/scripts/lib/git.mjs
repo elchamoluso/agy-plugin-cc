@@ -3,6 +3,8 @@
 // argv token to `agy --print=…`, and Linux caps one argv string at 128 KiB (MAX_ARG_STRLEN),
 // so the diff budget stays well under that.
 
+import os from "node:os";
+
 import { formatCommandFailure, runCommand } from "./process.mjs";
 
 export const DIFF_BUDGET_BYTES = 100 * 1024;
@@ -31,6 +33,17 @@ export function ensureGitRepository(cwd) {
     throw new Error("This command must run inside a Git repository.");
   }
   return result.stdout.trim();
+}
+
+// Conversation state key. Anchoring on the repository root means /agy:ask from
+// src/ and /agy:continue from the root resolve to the same conversation; outside
+// a repo (or without git) the cwd is the best available scope.
+export function stateKey(cwd) {
+  const result = git(cwd, ["rev-parse", "--show-toplevel"]);
+  if (result.error || result.status !== 0) {
+    return cwd;
+  }
+  return result.stdout.trim() || cwd;
 }
 
 export function detectDefaultBranch(cwd) {
@@ -106,7 +119,7 @@ export function collectReviewContext(cwd, options = {}) {
         .stdout.split("\0").filter(Boolean);
       const untrackedDiffs = untrackedFiles
         .map((file) => {
-          const result = git(repoRoot, ["diff", "--no-ext-diff", "--no-index", "--", "/dev/null", file]);
+          const result = git(repoRoot, ["diff", "--no-ext-diff", "--no-index", "--", os.devNull, file]);
           // git diff --no-index exits 1 when files differ; that is the expected case.
           return result.error ? "" : result.stdout;
         })

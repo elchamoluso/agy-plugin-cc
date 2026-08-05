@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 // agy-companion — headless bridge between Claude Code and Google's Antigravity CLI (agy).
 // Pattern adapted from openai/codex-plugin-cc (Apache-2.0), with the codex app-server
-// transport replaced by one-shot `agy --print=…` spawns (agy has no persistent runtime,
-// no JSON output, no event stream — plain text on stdout is the whole contract).
+// transport replaced by one-shot `agy --print=…` spawns: agy has no persistent runtime,
+// so every call is a fresh process and continuity comes from --conversation. Results are
+// read via --output-format=json, which carries the conversation id and token usage;
+// pre-1.1.10 builds that only emit plain text still work through a fallback path.
 
 import fs from "node:fs";
 import os from "node:os";
@@ -11,7 +13,7 @@ import process from "node:process";
 import { spawn } from "node:child_process";
 
 import { binaryAvailable, runCommand, terminateProcessTree, killProcessTree } from "./lib/process.mjs";
-import { collectReviewContext, truncateToBudget, DIFF_BUDGET_BYTES } from "./lib/git.mjs";
+import { collectReviewContext, truncateToBudget, stateKey, DIFF_BUDGET_BYTES } from "./lib/git.mjs";
 
 // agy accepts both canonical slugs (`gemini-3.1-pro-high`, what `agy models` prints) and
 // display labels (`Gemini 3.1 Pro (High)`). We speak slugs: no spaces, no quoting hazard,
@@ -62,7 +64,6 @@ const DEFAULT_TIMEOUT_SECONDS = 420;
 const WATCHDOG_GRACE_SECONDS = 30;
 // Linux caps a single argv string at 128 KiB (MAX_ARG_STRLEN); the prompt is one token.
 const MAX_PROMPT_BYTES = 120 * 1024;
-const CONVERSATIONS_DIR = path.join(os.homedir(), ".gemini", "antigravity-cli", "conversations");
 const TOKEN_FILE = path.join(os.homedir(), ".gemini", "antigravity-cli", "antigravity-oauth-token");
 
 // ---------------------------------------------------------------------------
@@ -136,26 +137,18 @@ function parseTimeout(options) {
 }
 
 // ---------------------------------------------------------------------------
-// Conversation tracking. agy persists each conversation as <uuid>.db under
-// CONVERSATIONS_DIR; a fresh run creates a new UUID. Snapshotting the dir
-// before/after the run identifies THIS run's conversation even if other agy
-// sessions exist. State is keyed by cwd so each project continues its own.
+// Conversation tracking. agy returns the conversation id in its JSON output, so
+// the companion just records it. State is keyed by repository root (falling back
+// to cwd outside a repo) so /agy:ask in src/ and /agy:continue in the root find
+// the same conversation.
 // ---------------------------------------------------------------------------
 
-function conversationSnapshot() {
-  try {
-    return new Set(
-      fs.readdirSync(CONVERSATIONS_DIR)
-        .filter((name) => name.includes(".db"))
-        .map((name) => name.replace(/\.db(-wal|-shm)?$/, ""))
-    );
-  } catch {
-    return new Set();
-  }
-}
-
+// Deliberately NOT CLAUDE_PLUGIN_DATA: the companion runs through the Bash tool, which
+// inherits whatever plugin context is ambient — in practice another plugin's data dir —
+// so honouring it writes agy state into a stranger's directory. Verified: it resolved to
+// .../plugins/data/codex-openai-codex. A fixed cache path is predictable and collision-free.
 function stateFilePath() {
-  const dir = process.env.CLAUDE_PLUGIN_DATA || path.join(os.homedir(), ".cache", "agy-plugin");
+  const dir = process.env.AGY_PLUGIN_DATA || path.join(os.homedir(), ".cache", "agy-plugin");
   return path.join(dir, "conversations.json");
 }
 
@@ -180,7 +173,14 @@ function rememberConversation(conversationId, model) {
   }
   try {
     const state = loadConversationState();
-    state[process.cwd()] = { conversationId, model, updatedAt: new Date().toISOString() };
+    const key = stateKey(process.cwd());
+    state[key] = { conversationId, model, updatedAt: new Date().toISOString() };
+    // Entries written before state was keyed by repo root would shadow nothing but
+    // linger forever; drop the cwd entry once its repo-root replacement exists.
+    const cwd = process.cwd();
+    if (cwd !== key) {
+      delete state[cwd];
+    }
     const file = stateFilePath();
     fs.mkdirSync(path.dirname(file), { recursive: true });
     fs.writeFileSync(file, `${JSON.stringify(state, null, 2)}\n`);
@@ -191,7 +191,9 @@ function rememberConversation(conversationId, model) {
 }
 
 function recallConversation() {
-  return loadConversationState()[process.cwd()] ?? null;
+  const state = loadConversationState();
+  // Fall back to the pre-0.3 cwd key so upgrading does not orphan live conversations.
+  return state[stateKey(process.cwd())] ?? state[process.cwd()] ?? null;
 }
 
 // ---------------------------------------------------------------------------
@@ -208,10 +210,39 @@ function buildAgyArgs({ prompt, model, skipPermissions, conversationId, timeoutS
   if (conversationId) {
     args.push(`--conversation=${conversationId}`);
   }
+  args.push("--output-format=json");
   args.push(`--model=${model}`);
   args.push(`--print-timeout=${timeoutSeconds}s`);
   args.push(`--print=${prompt}`);
   return args;
+}
+
+// agy --output-format=json emits one object: {conversation_id, status, response,
+// error?, duration_seconds, num_turns, usage}. Two traps, both verified against
+// v1.1.10: a failed run still exits 0 (so `status` is the only truth), and a
+// nonexistent --conversation uuid is silently ignored in favour of a fresh one
+// (whose id comes back in conversation_id, making the mismatch trivial to spot).
+// Older agy builds have no JSON mode at all, hence the plain-text fallback.
+function parseAgyOutput(stdout) {
+  const text = stdout.trim();
+  if (!text.startsWith("{")) {
+    return { legacy: true, response: stdout, conversationId: null, status: null, error: null, usage: null, numTurns: null };
+  }
+  let payload;
+  try {
+    payload = JSON.parse(text);
+  } catch {
+    return { legacy: true, response: stdout, conversationId: null, status: null, error: null, usage: null, numTurns: null };
+  }
+  return {
+    legacy: false,
+    response: typeof payload.response === "string" ? payload.response : "",
+    conversationId: payload.conversation_id || null,
+    status: payload.status ?? null,
+    error: payload.error || null,
+    usage: payload.usage ?? null,
+    numTurns: payload.num_turns ?? null
+  };
 }
 
 function runAgy(agyArgs, timeoutSeconds) {
@@ -276,7 +307,6 @@ async function executePrompt({ prompt, options, skipPermissions, conversationId 
 
   const model = resolveModel(options.model, options.effort);
   const timeoutSeconds = parseTimeout(options);
-  const before = conversationSnapshot();
 
   const result = await runAgy(
     buildAgyArgs({ prompt, model, skipPermissions, conversationId, timeoutSeconds }),
@@ -291,29 +321,32 @@ async function executePrompt({ prompt, options, skipPermissions, conversationId 
   }
 
   if (result.timedOut) {
+    // JSON mode buffers the whole answer until the run ends, so a killed run leaves
+    // nothing partial to show (plain-text mode used to dribble out). --output-format
+    // stream-json would restore incremental output; not worth the parser yet.
     process.stdout.write(result.stdout);
-    fail(`agy timed out after ${timeoutSeconds + WATCHDOG_GRACE_SECONDS}s (watchdog) and was terminated. Partial output above, if any. Retry with --timeout <seconds> for longer runs.`, 124);
+    fail(`agy timed out after ${timeoutSeconds + WATCHDOG_GRACE_SECONDS}s (watchdog) and was terminated. JSON mode buffers until completion, so no partial answer survives a timeout. Retry with --timeout <seconds> for longer runs.`, 124);
   }
 
-  // agy silently IGNORES a nonexistent --conversation uuid and starts a fresh one
-  // (exit 0, no error — verified against v1.1.3), so trust the filesystem, not the
-  // flag: if the requested uuid has no .db after the run, adopt the one agy created.
-  const after = conversationSnapshot();
-  const created = [...after].filter((id) => !before.has(id));
-  let activeConversation = conversationId ?? null;
-  let conversationMismatch = false;
-  if (activeConversation && !after.has(activeConversation)) {
-    conversationMismatch = true;
-    activeConversation = created.length === 1 ? created[0] : null;
-  } else if (!activeConversation && created.length === 1) {
-    activeConversation = created[0];
-  }
+  const parsed = parseAgyOutput(result.stdout);
+  const activeConversation = parsed.conversationId;
+  // agy ignores an unknown --conversation uuid and starts a fresh one instead of
+  // erroring, so a returned id that differs from the requested one IS the mismatch.
+  const conversationMismatch = Boolean(
+    conversationId && activeConversation && activeConversation !== conversationId
+  );
+  // A failed run exits 0, so `status` decides — not result.code.
+  const failed = parsed.legacy ? result.code !== 0 : parsed.status === "ERROR";
 
   // The answer ALWAYS flushes first; state persistence is best-effort and must
   // never destroy a successful (slow, subscription-consuming) agy run.
-  process.stdout.write(result.stdout);
-  if (result.stdout && !result.stdout.endsWith("\n")) {
+  const body = parsed.legacy ? result.stdout : parsed.response;
+  process.stdout.write(body);
+  if (body && !body.endsWith("\n")) {
     process.stdout.write("\n");
+  }
+  if (parsed.error) {
+    process.stderr.write(`[agy error] ${parsed.error}\n`);
   }
 
   // agy reports headless permission auto-denials ("jetski: no output produced — a tool
@@ -323,23 +356,29 @@ async function executePrompt({ prompt, options, skipPermissions, conversationId 
     .split("\n")
     .filter((line) => line.trim() && !line.startsWith("Shell cwd was reset"))
     .join("\n");
-  if (stderrClean && (!result.stdout.trim() || result.code !== 0)) {
+  if (stderrClean && (!body.trim() || failed)) {
     process.stdout.write(`[agy stderr]\n${stderrClean}\n`);
   }
 
   // Only remember conversations from successful runs — a failed run (e.g. a bad
   // user-supplied --conversation uuid) must not poison future /agy:continue calls.
   let stateWarning = null;
-  if (result.code === 0) {
+  if (!failed) {
     stateWarning = rememberConversation(activeConversation, model);
   }
 
   const trailerParts = [
-    `exit ${result.code}`,
+    `exit ${failed ? 1 : 0}`,
     `model "${model}"`,
     `${result.elapsedSeconds.toFixed(1)}s`,
     activeConversation ? `conversation ${activeConversation}` : "conversation unknown"
   ];
+  if (parsed.usage?.total_tokens) {
+    trailerParts.push(`${parsed.usage.total_tokens} tokens`);
+  }
+  if (parsed.numTurns) {
+    trailerParts.push(`${parsed.numTurns} turn${parsed.numTurns === 1 ? "" : "s"}`);
+  }
   process.stdout.write(`\n[agy-companion] ${trailerParts.join(" · ")}\n`);
   if (conversationMismatch) {
     process.stdout.write(`[agy-companion] warning: requested conversation ${conversationId} does not exist — agy silently started a FRESH conversation instead; previous context was NOT carried over\n`);
@@ -347,15 +386,15 @@ async function executePrompt({ prompt, options, skipPermissions, conversationId 
   if (stateWarning) {
     process.stdout.write(`[agy-companion] warning: ${stateWarning}\n`);
   }
-  if (activeConversation && result.code === 0) {
+  if (activeConversation && !failed) {
     const hint = skipPermissions
       ? "follow up with /agy:continue (Q&A only — tool permissions are NOT carried over; use /agy:exec again for more changes)"
       : "follow up in the same agy conversation with /agy:continue <prompt>";
     process.stdout.write(`[agy-companion] ${hint}\n`);
   }
 
-  if (result.code !== 0) {
-    process.exit(result.code ?? 1);
+  if (failed) {
+    process.exit(result.code || 1);
   }
 }
 
@@ -373,7 +412,7 @@ async function handleContinue(raw) {
   const recalled = recallConversation();
   const conversationId = options.conversation ?? recalled?.conversationId;
   if (!conversationId) {
-    fail(`No previous agy conversation recorded for ${process.cwd()}. Start one with /agy:ask first, or pass --conversation <uuid>.`);
+    fail(`No previous agy conversation recorded for ${stateKey(process.cwd())}. Start one with /agy:ask first, or pass --conversation <uuid>.`);
   }
   // Stay on the conversation's original model unless the user overrides it —
   // otherwise a Sonnet conversation would silently continue on the default Gemini.
