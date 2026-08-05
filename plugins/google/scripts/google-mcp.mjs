@@ -73,12 +73,28 @@ function kb(bytes) {
   return bytes ? `${Math.round(bytes / 1024)} KB` : "—";
 }
 
-function cmdList() {
+// Claude Code expands ${VAR} and ${VAR:-default} in url, args, env AND headers, leaving
+// anything undefined as a literal. Scanning the whole serialised config catches all four
+// in one place — the previous check only looked at projectEnv, so a server whose only
+// variable lives in a header (maps-grounding-lite) was added with no warning at all and
+// then 401'd, which reads exactly like the OAuth problem it actually avoids.
+function unsetVariables(config) {
+  const found = new Map();
+  for (const [, name, fallback] of JSON.stringify(config).matchAll(/\$\{([A-Za-z_][A-Za-z0-9_]*)(?::-([^}]*))?\}/g)) {
+    if (!process.env[name]) found.set(name, fallback ?? null);
+  }
+  return found;
+}
+
+function cmdList(showAll) {
   const enabled = new Set(Object.keys(readProjectConfig().mcpServers));
-  const rows = Object.entries(servers).map(([id, s]) => ({
+  const visible = Object.entries(servers).filter(([, s]) => showAll || s.status !== "listed");
+  const hidden = Object.keys(servers).length - visible.length;
+  const rows = visible.map(([id, s]) => ({
     id,
     on: enabled.has(id),
     kind: s.kind,
+    status: s.status,
     tools: s.toolCount ?? null,
     bytes: s.schemaBytes ?? null,
     title: s.title,
@@ -94,11 +110,8 @@ function cmdList() {
   }
   const total = rows.filter((r) => r.on).reduce((s, r) => s + (r.bytes ?? 0), 0);
   process.stdout.write(`\n● enabled in this project  ○ available\nEnabled schema cost: ${kb(total)}\n`);
-  if (catalog.unavailable) {
-    process.stdout.write("\nNot available:\n");
-    for (const [id, why] of Object.entries(catalog.unavailable)) {
-      process.stdout.write(`  ${id}: ${why}\n`);
-    }
+  if (hidden) {
+    process.stdout.write(`\n${hidden} more server(s) are catalogued but never probed — \`list --all\` shows them. \`add\` refuses them until someone measures them.\n`);
   }
 }
 
@@ -121,6 +134,19 @@ function cmdAdd(ids) {
     }
     if (global.has(id)) {
       process.stdout.write(`! ${id} is already configured globally in ~/.claude.json — skipping to avoid a duplicate\n`);
+      continue;
+    }
+    // The catalogue's whole claim is that its numbers were measured. Adding a server
+    // nobody has probed would enable something of unknown cost and unknown liveness.
+    if (server.status === "listed") {
+      process.stdout.write(
+        `✗ ${id} is catalogued from Google's supported-products page but has never been probed, so its tool count and schema cost are unknown.\n` +
+          `  Measure it first: node "\${CLAUDE_PLUGIN_ROOT}/scripts/google-doctor.mjs" --probe ${id}\n`
+      );
+      continue;
+    }
+    if (server.status === "unavailable") {
+      process.stdout.write(`✗ ${id}: ${server.notes ?? "probed and found not to exist"}\n`);
       continue;
     }
     // Checked before the binary requirements: a missing binary is a detour, but copying
@@ -152,17 +178,20 @@ function cmdAdd(ids) {
     const cost = server.schemaBytes ? ` (+${kb(server.schemaBytes)} of schema per session)` : "";
     process.stdout.write(`+ ${id}${cost}\n`);
     if (server.warning) process.stdout.write(`  warning: ${server.warning}\n`);
-    if (server.projectEnv) {
-      const unset = Object.keys(server.projectEnv).filter((name) => !process.env[name]);
-      process.stdout.write(`  reads from your shell environment: ${Object.keys(server.projectEnv).join(", ")}\n`);
-      if (unset.length) {
-        process.stdout.write(`  NOT SET right now: ${unset.join(", ")} — export them before starting Claude Code or the server will fail to authenticate.\n`);
+    const unset = unsetVariables(config.mcpServers[id]);
+    if (unset.size) {
+      const described = [...unset].map(([name, fallback]) => (fallback === null ? name : `${name} (falls back to "${fallback}")`));
+      const blocking = [...unset].filter(([, fallback]) => fallback === null);
+      process.stdout.write(`  reads from your shell environment: ${described.join(", ")}\n`);
+      if (blocking.length) {
+        process.stdout.write(`  NOT SET right now: ${blocking.map(([n]) => n).join(", ")} — export them before starting Claude Code, or the value stays a literal \${…} and the server fails to authenticate.\n`);
       }
-    } else if (server.env?.length) {
-      process.stdout.write(`  needs env: ${server.env.join(", ")}\n`);
     }
     if (server.auth === "oauth-no-dcr") {
       process.stdout.write("  auth: Google does not support Dynamic Client Registration, so this will connect but 401 on every call until you attach your own OAuth client. See /google:setup.\n");
+    }
+    if (server.auth === "api-key") {
+      process.stdout.write("  auth: API key in a header — the one remote server here that works without an OAuth client. That key is a bearer credential; restrict it in the console.\n");
     }
   }
 
@@ -216,7 +245,7 @@ const [, , subcommand, ...rest] = process.argv;
 switch (subcommand) {
   case "list":
   case undefined:
-    cmdList();
+    cmdList(rest.includes("--all"));
     break;
   case "add":
     cmdAdd(rest);
