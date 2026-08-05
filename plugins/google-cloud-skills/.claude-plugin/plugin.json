@@ -1,0 +1,9 @@
+{
+  "name": "google-cloud-skills",
+  "version": "0.1.0",
+  "description": "Google Cloud skills: networking, security, storage, databases, serverless, observability and the Well-Architected Framework. 37 skills vendored unmodified from google/skills.",
+  "author": {
+    "name": "Jesús M. Ferreira"
+  },
+  "license": "Apache-2.0"
+}

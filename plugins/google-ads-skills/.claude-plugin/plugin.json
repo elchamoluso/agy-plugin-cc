@@ -1,0 +1,9 @@
+{
+  "name": "google-ads-skills",
+  "version": "0.1.0",
+  "description": "Google Ads and Analytics skills: Ads API, Data Manager API, Mobile Ads, IMA SDK, and the GA4 Admin and Data APIs. 14 skills vendored unmodified from google/skills.",
+  "author": {
+    "name": "Jesús M. Ferreira"
+  },
+  "license": "Apache-2.0"
+}

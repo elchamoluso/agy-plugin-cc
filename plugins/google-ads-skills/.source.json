@@ -1,0 +1,28 @@
+{
+  "repo": "https://github.com/google/skills.git",
+  "ref": "main",
+  "commit": "777fb8e194b9941c74c85f17b10202614ef4e435",
+  "commitDate": "2026-08-05T00:40:24-07:00",
+  "license": "Apache-2.0",
+  "verbatim": true,
+  "syncedBy": "plugins/google/scripts/sync-google-skills.mjs",
+  "skillCount": 14,
+  "treeHash": "sha256:b4cb34ba14121ad29d4f34c4aac95f54bd38c226e49385ba6379fe01768945f9",
+  "skills": {
+    "data-manager-api-audience-ingestion": "sha256:d1c567084f5d042b2809dfd7737b10f7e381c2fcff7e49049ad46d1ec9107d88",
+    "data-manager-api-event-ingestion": "sha256:98d0bf764b06175da7e5869e0cd3ebee090f0e413885f3c9f2dc3266ab5e402b",
+    "data-manager-api-setup": "sha256:eda745b4d3c129456e317dec1a8bccf5222558bb14bc302f2854f97335d5d91c",
+    "google-ads-api-account-diagnostics": "sha256:d9b9aabee975d779f4c83c16aef86d0f2f2688cea4e9e88d6c44f3be5282b1cc",
+    "google-ads-api-mcp-setup": "sha256:cdd2eb0115a62a75a964cd0585cc2d6715dc455cb7bb73bc2f184b71a1ca81db",
+    "google-ads-api-quickstart": "sha256:fbdcd529a11543117a673007ac03ce51b7f686aefd764372aad8739daa2ed9cb",
+    "google-analytics-admin-api-basics": "sha256:9e0a4ac473bdef5eb5e32f7aae0eed8d287ad1972fcee8f485fac72bda4bf5fd",
+    "google-analytics-data-api-basics": "sha256:598c23ddabc8fb10c0efb3e989000c8b73b72c55f76fdcbe6b099b43585940ff",
+    "google-mobile-ads-android-migrate-to-next-gen": "sha256:d9e1d0bde7d35742b1228c3b980f231fa15682590a07f15fe5ea3e7acb09b936",
+    "google-mobile-ads-banner": "sha256:2fbce1911f41180b470915bc5c83169ce259868740f3deb4d6ef4229e583a2eb",
+    "google-mobile-ads-get-started": "sha256:9ac256ebbf5e955dcea5300cebbc28b33ecf0cbc6f533e841cb285f5aa53db5b",
+    "google-mobile-ads-interstitial": "sha256:b235a64765f239394ccbdc135f54c2feb448894eb847e09512ebf90a028c5014",
+    "google-mobile-ads-rewarded": "sha256:ef80d20fd311147be3beae3865e715b67c67b49d0432bde35a4ab337a3b9119d",
+    "ima-sdk-basics": "sha256:924ea792d7e881bdf1475fc83ec0579d1471f14a2ff19a64539f1796672867c2"
+  },
+  "executables": {}
+}

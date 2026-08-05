@@ -1,0 +1,9 @@
+{
+  "name": "google-cloud-ai-skills",
+  "version": "0.1.0",
+  "description": "Vertex AI and Agent Platform skills: model deployment, tuning, inference, evaluation and the Gemini API. 22 skills vendored unmodified from google/skills.",
+  "author": {
+    "name": "Jesús M. Ferreira"
+  },
+  "license": "Apache-2.0"
+}

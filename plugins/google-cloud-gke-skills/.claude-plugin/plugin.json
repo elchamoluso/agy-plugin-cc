@@ -1,0 +1,9 @@
+{
+  "name": "google-cloud-gke-skills",
+  "version": "0.1.0",
+  "description": "Google Kubernetes Engine skills: cluster creation, upgrades, workload and platform security, networking, cost analysis, AI/TPU troubleshooting. All 28 gke-* skills, kept together because they cross-reference each other.",
+  "author": {
+    "name": "Jesús M. Ferreira"
+  },
+  "license": "Apache-2.0"
+}

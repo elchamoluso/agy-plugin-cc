@@ -5,7 +5,7 @@
   },
   "metadata": {
     "description": "Google tooling for Claude Code: the Antigravity CLI bridge, Workspace skills, and Google's MCP servers split into small opt-in bundles.",
-    "version": "0.3.0"
+    "version": "0.4.0"
   },
   "plugins": [
     {
@@ -61,6 +61,42 @@
         "name": "Jesús M. Ferreira"
       },
       "source": "./plugins/google-data-mcp"
+    },
+    {
+      "name": "google-cloud-skills",
+      "description": "Google Cloud skills: networking, security, storage, databases, serverless, observability and the Well-Architected Framework. 37 skills vendored unmodified from google/skills.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Jesús M. Ferreira"
+      },
+      "source": "./plugins/google-cloud-skills"
+    },
+    {
+      "name": "google-cloud-gke-skills",
+      "description": "Google Kubernetes Engine skills: cluster creation, upgrades, workload and platform security, networking, cost analysis, AI/TPU troubleshooting. All 28 gke-* skills, kept together because they cross-reference each other.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Jesús M. Ferreira"
+      },
+      "source": "./plugins/google-cloud-gke-skills"
+    },
+    {
+      "name": "google-cloud-ai-skills",
+      "description": "Vertex AI and Agent Platform skills: model deployment, tuning, inference, evaluation and the Gemini API. 22 skills vendored unmodified from google/skills.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Jesús M. Ferreira"
+      },
+      "source": "./plugins/google-cloud-ai-skills"
+    },
+    {
+      "name": "google-ads-skills",
+      "description": "Google Ads and Analytics skills: Ads API, Data Manager API, Mobile Ads, IMA SDK, and the GA4 Admin and Data APIs. 14 skills vendored unmodified from google/skills.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Jesús M. Ferreira"
+      },
+      "source": "./plugins/google-ads-skills"
     }
   ]
 }
