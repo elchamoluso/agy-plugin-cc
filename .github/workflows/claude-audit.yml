@@ -1,0 +1,71 @@
+name: Claude Audit
+
+# Auditoría desatendida por cron. El guardrail importante está en el prompt:
+# NO crear issue si el repo está sano, y comentar en el issue existente en vez
+# de abrir uno nuevo. Sin eso, 22 repos generan 22 issues basura al mes.
+#
+# 0 6 * * 0 lo sustituye rollout.sh por repo (semanal en públicos, mensual
+# escalonado en privados) para no disparar 22 runs a la vez.
+# Fuente de verdad:
+#   LusoMagnet/05-tecnologia/claude-gh-workflows/claude-audit.yml
+
+on:
+  schedule:
+    - cron: "0 6 * * 0"
+  workflow_dispatch:
+
+concurrency:
+  group: claude-audit-${{ github.repository }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      issues: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Claude audit
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            Auditoría periódica de ${{ github.repository }}. Responde en español.
+
+            PASO 1 — OBLIGATORIO ANTES DE ESCRIBIR NADA:
+            Ejecuta `gh issue list --label claude-audit --state open --json number,title,body`.
+            Ese es el estado de auditorías anteriores. Léelo antes de decidir nada.
+
+            PASO 2 — Revisa el repositorio buscando SOLO cosas accionables:
+            - Dependencias con vulnerabilidad conocida o abandonadas
+              (usa `npm audit` o `pip-audit` si hay manifiesto; si no, inspecciona
+              el manifiesto a mano — no inventes versiones que no has leído).
+            - Secretos o credenciales commiteadas en el árbol de trabajo.
+            - Deuda técnica que ya esté rompiendo algo, no la que "podría".
+
+            PASO 3 — Decide, en este orden:
+            a) Repo sano o solo hallazgos cosméticos -> NO hagas nada. Ni issue,
+               ni comentario. Termina y dilo en tu respuesta final. Este es el
+               resultado esperado la mayoría de los meses.
+            b) Hallazgos que YA están en un issue abierto con label claude-audit
+               -> comenta en ese issue solo si hay algo NUEVO. Si no, no hagas nada.
+            c) Hallazgos nuevos y accionables -> crea UN solo issue con label
+               `claude-audit`, con un hallazgo por sección, cada uno con: qué es,
+               dónde (ruta:línea) y qué hacer.
+
+            No abras un issue por hallazgo. No abras un issue para decir que todo
+            está bien. El silencio es una salida válida y preferible.
+          claude_args: |
+            --max-turns 20
+            --model claude-sonnet-5
+            --allowedTools "Read,Grep,Glob,Bash(git log:*),Bash(git diff:*),Bash(npm audit:*),Bash(pip-audit:*),Bash(gh issue list:*),Bash(gh issue view:*),Bash(gh issue create:*),Bash(gh issue comment:*)"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
