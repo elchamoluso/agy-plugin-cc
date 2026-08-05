@@ -1,22 +1,50 @@
-# agy-plugin-cc — Antigravity CLI (agy) para Claude Code
+# agy-plugin-cc — herramientas de Google para Claude Code
 
-Expone `agy` (Antigravity CLI de Google, modelos Gemini) como herramienta invocable desde
-Claude Code, replicando el patrón del plugin oficial [openai/codex-plugin-cc](https://github.com/openai/codex-plugin-cc)
-pero adaptado al contrato real de agy: invocaciones one-shot `--print`, texto plano por stdout,
-sin runtime persistente. Usa la suscripción Antigravity existente (OAuth) — sin coste por token.
+Un marketplace con seis plugins. `agy` puentea el Antigravity CLI de Google (modelos Gemini);
+los otros cinco traen Google Workspace y los servidores MCP de Google.
 
-## Requisitos
+```
+/plugin marketplace add elchamoluso/agy-plugin-cc
+```
+
+| Plugin | Qué trae | Coste siempre-activo |
+|---|---|---|
+| **agy** | `/agy:ask`, `/agy:review`, `/agy:exec` — Gemini vía tu suscripción Antigravity, sin coste por token | ~200 tok |
+| **google** | 44 skills de Workspace, `/google:doctor`, `/google:setup`, `/google:mcp` y el catálogo MCP | ~1,5k tok |
+| **google-workspace-recipes** | 41 plantillas `recipe-*` y 10 playbooks `persona-*` | ~1,5k tok |
+| **google-cloud-mcp** | gcloud, Cloud Run, Resource Manager, Developer Knowledge | ~57 KB de schema |
+| **google-marketing-mcp** | Google Ads, Analytics (GA4), Search Console | pide credenciales al instalar |
+| **google-data-mcp** | BigQuery + MCP Toolbox for Databases | ~133 KB de schema |
+
+Instala solo lo que uses:
+
+```
+/plugin install google@agy-marketplace
+/google:doctor
+```
+
+**Por qué los MCP van repartidos y no todos juntos:** los endpoints remotos de Google sirven su
+lista de herramientas **sin autenticar** — 151 herramientas y ~1,6 MB de esquema entre los 13,
+unos 400k tokens. Conectan "bien", cuestan contexto en cada sesión y solo fallan al llamar una
+herramienta. Y Claude Code solo permite encender o apagar un plugin entero. Los detalles y el
+tercer nivel de granularidad (`/google:mcp add <id>`, por proyecto) están en
+[`plugins/google/README.md`](plugins/google/README.md).
+
+## agy
+
+Replica el patrón del plugin oficial [openai/codex-plugin-cc](https://github.com/openai/codex-plugin-cc)
+adaptado al contrato real de agy: invocaciones one-shot `--print`, resultados en JSON, sin runtime
+persistente. Usa la suscripción Antigravity existente (OAuth) — sin coste por token.
+
+### Requisitos
 
 - Antigravity CLI instalado (`agy`, normalmente en `~/.local/bin`) y autenticado
   (correr `agy` una vez interactivo y completar el login de Google).
 - Node ≥ 18. Git para `/agy:review`.
 
-## Instalación
-
-Dentro de una sesión de Claude Code (o con `claude plugin …` desde la terminal):
+### Instalación
 
 ```
-/plugin marketplace add elchamoluso/agy-plugin-cc
 /plugin install agy@agy-marketplace
 /agy:setup
 ```
@@ -27,7 +55,7 @@ Para desarrollo iterativo: `claude --plugin-dir <clon>/plugins/agy` + `/reload-p
 Ojo: la instalación por marketplace COPIA el plugin a la caché de Claude Code; para recoger
 cambios nuevos hay que `/plugin marketplace update agy-marketplace` y reinstalar.
 
-## Comandos
+### Comandos de agy
 
 | Comando | Qué hace |
 |---|---|
@@ -50,7 +78,7 @@ reenvía a agy: un slug de familia a secas se rechaza con *"requires --effort"* 
 sufijo más `--effort` con *"conflicts"*, así que embeberlo es la única forma que siempre parsea.
 `claude-sonnet-4-6` y `claude-opus-4-6-thinking` no tienen variantes de esfuerzo.
 
-## Detalles de diseño (por qué el companion existe)
+### Detalles de diseño de agy
 
 - **Bug de flags de agy**: `--print` toma el prompt como VALOR del flag; si el siguiente token es
   otro flag, se lo traga como prompt. El companion siempre hace spawn con array argv y
@@ -86,7 +114,7 @@ sufijo más `--effort` con *"conflicts"*, así que embeberlo es la única forma 
   Solo `models` (sin texto del usuario) usa pre-ejecución; `setup` tampoco, porque su smoke test
   tarda hasta 90 s y la pre-ejecución `!` es síncrona y bloquea el ensamblado del prompt.
 
-## Seguridad
+### Seguridad de agy
 
 `/agy:exec` lanza agy con `--dangerously-skip-permissions`: dentro del directorio de trabajo,
 agy puede **leer y escribir ficheros y ejecutar comandos** sin pedir permiso. Dos barreras
