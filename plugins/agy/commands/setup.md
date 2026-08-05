@@ -3,9 +3,16 @@ description: Check that the agy CLI is installed and authenticated, and run a sm
 allowed-tools: Bash(node:*)
 ---
 
-!`node "${CLAUDE_PLUGIN_ROOT}/scripts/agy-companion.mjs" setup`
+Run this with the Bash tool and present the full output to the user:
 
-Present the full output to the user.
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/agy-companion.mjs" setup
+```
+
+The check ends with a live smoke test against the API, so it can take up to 90 seconds.
+Run it in the foreground — but tell the user it is running before you start, so the wait is
+expected. (It is deliberately NOT a `!`-prefixed pre-execution: that blocks prompt assembly
+with a frozen screen and no way to report progress.)
 
 If the check reports the binary as missing, explain that the Antigravity CLI must be installed separately (it is Google's agent CLI; this plugin only wraps an existing installation) and that it usually lives at `~/.local/bin/agy`.
 

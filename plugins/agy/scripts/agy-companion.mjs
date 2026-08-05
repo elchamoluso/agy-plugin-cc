@@ -66,6 +66,38 @@ const WATCHDOG_GRACE_SECONDS = 30;
 const MAX_PROMPT_BYTES = 120 * 1024;
 const TOKEN_FILE = path.join(os.homedir(), ".gemini", "antigravity-cli", "antigravity-oauth-token");
 
+// agy normally lives in ~/.local/bin, which is absent from the PATH of non-login
+// shells — the ones a GUI-launched Claude Code inherits. Resolve it explicitly so a
+// perfectly good install never reports as "not found".
+const AGY_FALLBACK_PATHS = [
+  path.join(os.homedir(), ".local", "bin", "agy"),
+  "/usr/local/bin/agy",
+  "/opt/homebrew/bin/agy"
+];
+
+let cachedAgyBinary;
+function resolveAgyBinary() {
+  if (cachedAgyBinary !== undefined) {
+    return cachedAgyBinary;
+  }
+  const override = process.env.AGY_BIN;
+  if (override && fs.existsSync(override)) {
+    cachedAgyBinary = override;
+    return cachedAgyBinary;
+  }
+  const onPath = runCommand(process.platform === "win32" ? "where" : "which", ["agy"]);
+  if (!onPath.error && onPath.status === 0 && onPath.stdout.trim()) {
+    cachedAgyBinary = onPath.stdout.trim().split("\n")[0].trim();
+    return cachedAgyBinary;
+  }
+  cachedAgyBinary = AGY_FALLBACK_PATHS.find((candidate) => fs.existsSync(candidate)) ?? "agy";
+  return cachedAgyBinary;
+}
+
+function agyLookupTrace() {
+  return [process.env.AGY_BIN, "PATH", ...AGY_FALLBACK_PATHS].filter(Boolean).join(", ");
+}
+
 // ---------------------------------------------------------------------------
 // Argument handling. Flags are only recognized at the START of the raw
 // argument string; everything after the first non-flag token is the prompt,
@@ -248,7 +280,7 @@ function parseAgyOutput(stdout) {
 function runAgy(agyArgs, timeoutSeconds) {
   return new Promise((resolve) => {
     const startedAt = Date.now();
-    const child = spawn("agy", agyArgs, {
+    const child = spawn(resolveAgyBinary(), agyArgs, {
       cwd: process.cwd(),
       env: process.env,
       detached: true,
@@ -315,7 +347,7 @@ async function executePrompt({ prompt, options, skipPermissions, conversationId 
 
   if (result.error) {
     if (result.error.code === "ENOENT") {
-      fail("agy CLI not found on PATH. Install the Antigravity CLI and ensure ~/.local/bin is on PATH, then run /agy:setup.");
+      fail(`agy CLI not found. Looked in: ${agyLookupTrace()}. Install the Antigravity CLI, or point AGY_BIN at it, then run /agy:setup.`);
     }
     fail(`Failed to launch agy: ${result.error.message}`);
   }
@@ -484,9 +516,9 @@ async function handleReview(raw) {
 }
 
 function handleModels() {
-  const result = runCommand("agy", ["models"]);
+  const result = runCommand(resolveAgyBinary(), ["models"]);
   if (result.error?.code === "ENOENT") {
-    fail("agy CLI not found on PATH. Install the Antigravity CLI and run /agy:setup.");
+    fail(`agy CLI not found. Looked in: ${agyLookupTrace()}. Install the Antigravity CLI, or point AGY_BIN at it, then run /agy:setup.`);
   }
   if (result.error) {
     fail(`Failed to run agy models: ${result.error.message}. Run /agy:setup to diagnose.`);
@@ -511,7 +543,7 @@ async function handleSetup() {
   const lines = ["# agy plugin setup check", ""];
   let healthy = true;
 
-  const availability = binaryAvailable("agy");
+  const availability = binaryAvailable(resolveAgyBinary());
   if (availability.available) {
     lines.push(`- Binary: agy ${availability.detail} — OK`);
   } else {
@@ -569,8 +601,10 @@ async function handleSetup() {
 
 // ---------------------------------------------------------------------------
 
+// stderr, not stdout: Claude Code's Bash tool shows both, but keeping the two apart
+// means a piped run can tell an answer from a failure.
 function fail(message, code = 1) {
-  process.stdout.write(`${message}\n`);
+  process.stderr.write(`${message}\n`);
   process.exit(code);
 }
 
