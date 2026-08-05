@@ -39,33 +39,35 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
             Auditoría periódica de ${{ github.repository }}. Responde en español.
+            Explora con Read/Grep/Glob, no con shell: es más rápido y no gasta turnos.
 
-            PASO 1 — OBLIGATORIO ANTES DE ESCRIBIR NADA:
-            Ejecuta `gh issue list --label claude-audit --state open --json number,title,body`.
-            Ese es el estado de auditorías anteriores. Léelo antes de decidir nada.
+            PASO 1 — antes de escribir nada, mira el estado anterior:
+            `gh issue list --label claude-audit --state open --json number,title,body`
+            (la etiqueta `claude-audit` ya existe en el repo; no la crees).
 
-            PASO 2 — Revisa el repositorio buscando SOLO cosas accionables:
-            - Dependencias con vulnerabilidad conocida o abandonadas
-              (usa `npm audit` o `pip-audit` si hay manifiesto; si no, inspecciona
-              el manifiesto a mano — no inventes versiones que no has leído).
-            - Secretos o credenciales commiteadas en el árbol de trabajo.
+            PASO 2 — busca SOLO cosas accionables:
+            - Dependencias vulnerables o abandonadas. Si hay `package.json` usa
+              `npm audit`; si hay `requirements.txt`/`pyproject.toml` usa `pip-audit`.
+              Si no hay manifiesto de dependencias, SÁLTATE este apartado sin más.
+            - Secretos o credenciales commiteadas.
             - Deuda técnica que ya esté rompiendo algo, no la que "podría".
 
-            PASO 3 — Decide, en este orden:
-            a) Repo sano o solo hallazgos cosméticos -> NO hagas nada. Ni issue,
-               ni comentario. Termina y dilo en tu respuesta final. Este es el
-               resultado esperado la mayoría de los meses.
-            b) Hallazgos que YA están en un issue abierto con label claude-audit
-               -> comenta en ese issue solo si hay algo NUEVO. Si no, no hagas nada.
-            c) Hallazgos nuevos y accionables -> crea UN solo issue con label
-               `claude-audit`, con un hallazgo por sección, cada uno con: qué es,
-               dónde (ruta:línea) y qué hacer.
+            No inventes versiones ni CVEs que no hayas leído en un fichero real.
 
-            No abras un issue por hallazgo. No abras un issue para decir que todo
-            está bien. El silencio es una salida válida y preferible.
+            PASO 3 — decide:
+            a) Repo sano o solo hallazgos cosméticos -> NO hagas nada. Ni issue ni
+               comentario. Dilo en tu respuesta final y termina. Este es el
+               resultado esperado la mayoría de los meses.
+            b) Hallazgos que ya están en un issue abierto con label `claude-audit`
+               -> comenta ahí solo si hay algo NUEVO; si no, no hagas nada.
+            c) Hallazgos nuevos y accionables -> UN solo issue con label
+               `claude-audit`: por hallazgo, qué es, dónde (ruta:línea) y qué hacer.
+
+            No abras un issue por hallazgo, ni uno para decir que todo está bien.
+            El silencio es una salida válida y preferible.
           claude_args: |
-            --max-turns 20
+            --max-turns 30
             --model claude-sonnet-5
-            --allowedTools "Read,Grep,Glob,Bash(git log:*),Bash(git diff:*),Bash(npm audit:*),Bash(pip-audit:*),Bash(gh issue list:*),Bash(gh issue view:*),Bash(gh issue create:*),Bash(gh issue comment:*)"
+            --allowedTools "Read,Grep,Glob,Bash(ls:*),Bash(cat:*),Bash(head:*),Bash(wc:*),Bash(find:*),Bash(jq:*),Bash(git log:*),Bash(git diff:*),Bash(git grep:*),Bash(git ls-files:*),Bash(npm:*),Bash(pip:*),Bash(pip3:*),Bash(pip-audit:*),Bash(gh issue list:*),Bash(gh issue view:*),Bash(gh issue create:*),Bash(gh issue comment:*)"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
